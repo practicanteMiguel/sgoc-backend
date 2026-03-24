@@ -3,6 +3,8 @@ import {
   CreateDateColumn, ManyToOne, JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { NotificationPriority } from './enum/notification-priority.enum';
+import { NotificationType } from './enum/notification-type.enum';
 
 @Entity('notifications')
 export class Notification {
@@ -13,8 +15,23 @@ export class Notification {
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
-  @Column()
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'sender_id' })
+  sender!: User;
+
+  @Column({
+    type: 'enum',
+    enum: NotificationType,
+    default: NotificationType.MESSAGE,
+  })
   type!: string;
+
+  @Column({
+    type: 'enum',
+    enum: NotificationPriority,
+    default: NotificationPriority.LOW,
+  })
+  priority!: string;
 
   @Column()
   title!: string;

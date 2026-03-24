@@ -7,8 +7,9 @@ import { RolesModule } from './roles/roles.module';
 import { ModulesModule } from './modules/modules.module';
 import { AuditModule } from './audit/audit.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { MailService } from './mail/mail.service';
 import { MailModule } from './mail/mail.module';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -44,6 +45,12 @@ import { MailModule } from './mail/mail.module';
     NotificationsModule,
     MailModule,
   ],
-  providers: [MailService],
+  providers: [
+    // Registro global — corre en TODOS los controllers automáticamente
+    {
+      provide:  APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
+    },
+  ],
 })
 export class AppModule {}
