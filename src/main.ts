@@ -7,10 +7,10 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Prefijo global para todas las rutas
+
   app.setGlobalPrefix('api/v1');
 
-  // CORS — en producción restringir al dominio del frontend
+
   app.enableCors({
     origin: process.env.NODE_ENV === 'production'
       ? process.env.FRONTEND_URL
@@ -18,20 +18,19 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+  
 
-  // Validación global con class-validator
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,           // elimina campos no declarados en el DTO
-      forbidNonWhitelisted: true,// lanza error si llegan campos extra
-      transform: true,           // transforma tipos automáticamente
+      whitelist: true,           
+      forbidNonWhitelisted: true,
+      transform: true,           
     }),
   );
 
-  // Filtro global de excepciones
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Swagger — documentación de APIs
+
   const config = new DocumentBuilder()
     .setTitle('Gestión API')
     .setDescription('API de la plataforma de gestión')
@@ -41,8 +40,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port);
+  const port = process.env.PORT ?? 3001;
+  await app.listen(port, '0.0.0.0');
   console.log(`🚀 Backend corriendo en: http://localhost:${port}/api/v1`);
   console.log(`📚 Swagger docs en:      http://localhost:${port}/api/docs`);
 }
