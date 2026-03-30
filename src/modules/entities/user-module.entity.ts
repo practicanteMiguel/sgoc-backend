@@ -2,24 +2,23 @@ import {
   Entity, PrimaryGeneratedColumn, Column,
   CreateDateColumn, ManyToOne, JoinColumn,
 } from 'typeorm';
-import { Role } from '../../roles/entities/role.entity';
-import { AppModule } from './module.entity';
 import { User } from '../../users/entities/user.entity';
+import { AppModule } from './module.entity';
 
-@Entity('role_module_access')
-export class RoleModuleAccess {
+@Entity('user_module_access')
+export class UserModuleAccess {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ManyToOne(() => Role, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'role_id' })
-  role!: Role;
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user!: User;
 
   @ManyToOne(() => AppModule, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'module_id' })
   module!: AppModule;
 
-  @Column({ default: false })
+  @Column({ default: true })
   can_view!: boolean;
 
   @Column({ default: false })

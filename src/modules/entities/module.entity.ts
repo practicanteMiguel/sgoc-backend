@@ -3,7 +3,6 @@ import {
   CreateDateColumn, ManyToOne, OneToMany, JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { RoleModuleAccess } from './role-module-access.entity';
 
 @Entity('modules')
 export class AppModule {
@@ -44,7 +43,4 @@ export class AppModule {
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
-
-  @OneToMany(() => RoleModuleAccess, (rma) => rma.module)
-  role_access!: RoleModuleAccess[];
 }
