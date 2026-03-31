@@ -22,7 +22,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles('admin', 'coordinator')
+  
   @ApiOperation({ summary: 'Listar usuarios con paginación' })
   findAll(@Query('page') page = 1, @Query('limit') limit = 20) {
     return this.usersService.findAll(+page, +limit);
@@ -31,7 +31,7 @@ export class UsersController {
   @Get('profile')
   @ApiOperation({ summary: 'Obtener mi perfil' })
   profile(@CurrentUser() user: User) {
-    return this.usersService.findById(user.id);
+    return this.usersService.getProfile(user.id);
   }
 
   @Get(':id')
@@ -49,7 +49,6 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles('admin')
   @ApiOperation({ summary: 'Actualizar datos del usuario' })
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);

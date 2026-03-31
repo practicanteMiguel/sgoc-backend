@@ -13,6 +13,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
+import { ProfileResponseDto } from './dto/response-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -24,13 +25,14 @@ export class UsersService {
   ) {}
 
   async findAll(page = 1, limit = 20) {
-    const [data, total] = await this.userRepo.findAndCount({
+    const [users, total] = await this.userRepo.findAndCount({
       relations: ['user_roles', 'user_roles.role'],
       withDeleted: false,
       skip: (page - 1) * limit,
       take: limit,
       order: { created_at: 'DESC' },
     });
+    const data = users.map(({ password_hash: _, ...rest }) => rest);
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
@@ -39,8 +41,33 @@ export class UsersService {
       where: { id },
       relations: ['user_roles', 'user_roles.role'],
     });
+
     if (!user) throw new NotFoundException('Usuario no encontrado');
+
     return user;
+  }
+
+  async getProfile(id: string): Promise<ProfileResponseDto> {
+    const user = await this.userRepo.findOne({
+      where: { id },
+      relations: ['user_roles', 'user_roles.role'],
+    });
+
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    return {
+      id:         user.id,
+      email:      user.email,
+      first_name: user.first_name,
+      last_name:  user.last_name,
+      phone:      user.phone,
+      position:   user.position,
+      module:     user.module,
+      field:      user.field,
+      user_roles: user.user_roles.map(ur => ({
+        role: { name: ur.role.name, slug: ur.role.slug },
+      })),
+    };
   }
 
   async findByEmail(email: string) {

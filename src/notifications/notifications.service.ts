@@ -1,6 +1,5 @@
 import {
-  Injectable, NotFoundException,
-  ForbiddenException, BadRequestException,
+  Injectable, NotFoundException, BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +8,8 @@ import { NotificationPriority } from './entities/enum/notification-priority.enum
 import { NotificationType } from './entities/enum/notification-type.enum';
 import { User } from '../users/entities/user.entity';
 import { SendNotificationDto } from './dto/send-notification.dto';
+import { NotificationsGateway } from './notifications.gateway';
+import { title } from 'process';
 
 @Injectable()
 export class NotificationsService {
@@ -17,6 +18,7 @@ export class NotificationsService {
     private notifRepo: Repository<Notification>,
     @InjectRepository(User)
     private userRepo: Repository<User>,
+    private gateway: NotificationsGateway,
   ) {}
 
 
@@ -45,6 +47,20 @@ export class NotificationsService {
     notif.sender = sender;
 
     const saved = await this.notifRepo.save(notif);
+
+    this.gateway.sendToUser(recipient.id, {
+      id: saved.id,
+      title: saved.title,
+      message: saved.message,
+      priority: saved.priority,
+      is_read: false,
+      sender: {
+        id: sender.id,
+        first_name: sender.first_name,
+        last_name: sender.last_name,
+      },
+    });
+
 
   
     return this.notifRepo.findOne({

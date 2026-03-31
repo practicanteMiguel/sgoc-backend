@@ -23,7 +23,7 @@ export class AuthService {
     if (!user || !user.is_active)
       throw new UnauthorizedException('Credenciales inválidas');
 
-    // Verificar que haya confirmado el correo antes de dejar pasar
+    
     if (!user.is_email_verified)
       throw new UnauthorizedException(
         'Debes verificar tu correo electrónico antes de ingresar',
@@ -67,12 +67,13 @@ export class AuthService {
         id:             user.id,
         email:          user.email,
         first_name:     user.first_name,
-        last_name:      user.last_name,
+        last_name: user.last_name,
+        phone:          user.phone,
         position:       user.position,
         module:         user.module,
         field:          user.field,
         roles,
-        is_first_login: user.is_first_login, // el frontend lo usa para redirigir
+        is_first_login: user.is_first_login,
       },
     };
   }

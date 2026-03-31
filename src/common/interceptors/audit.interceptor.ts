@@ -39,11 +39,11 @@ export class AuditInterceptor implements NestInterceptor {
     const pathParts  = cleanPath.split('/').filter(Boolean);
     const moduleName = pathParts[0] ?? 'unknown';
 
-    // ✅ FIX — safeBody es Record o undefined, nunca null
+
     const safeBody: Record<string, any> | undefined =
       body && Object.keys(body).length > 0
         ? this.sanitizeBody({ ...body })
-        : undefined; // ← undefined en lugar de null
+        : undefined;
 
     return next.handle().pipe(
       tap({
@@ -60,7 +60,7 @@ export class AuditInterceptor implements NestInterceptor {
               action:      actionMap[method],
               entity_type: moduleName,
               entity_id:   entityId,
-              // ✅ FIX — undefined en DELETE en lugar de null
+        
               new_values:  method !== 'DELETE' ? safeBody : undefined,
               ip_address:  ip,
               module:      moduleName,

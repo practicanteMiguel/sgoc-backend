@@ -22,9 +22,9 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,           
+      whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true,           
+      transform: true,
     }),
   );
 
@@ -43,6 +43,7 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3001;
   await app.listen(port, '0.0.0.0');
   console.log(`🚀 Backend corriendo en: http://localhost:${port}/api/v1`);
+  console.log(`📡 websocket para notificaciones en: ws://localhost:${port}/notifications`);
   console.log(`📚 Swagger docs en:      http://localhost:${port}/api/docs`);
 }
 bootstrap();
