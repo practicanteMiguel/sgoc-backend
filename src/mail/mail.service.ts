@@ -1,22 +1,13 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: nodemailer.Transporter;
 
   constructor(private readonly config: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host:   this.config.get<string>('MAIL_HOST'),
-      port:   this.config.get<number>('MAIL_PORT'),
-      secure: false, // puerto 587 usa STARTTLS, no SSL directo
-      auth: {
-        user: this.config.get<string>('MAIL_USER'),
-        pass: this.config.get<string>('MAIL_PASS'),
-      },
-    });
+    sgMail.setApiKey(this.config.getOrThrow<string>('SENDGRID_API_KEY'));
   }
 
   // ── Email de bienvenida con contraseña temporal y verificación ──
@@ -29,8 +20,8 @@ export class MailService {
     const verifyUrl = `${this.config.get('FRONTEND_URL')}/auth/verify-email?token=${token}`;
 
     try {
-      await this.transporter.sendMail({
-        from:    this.config.get('MAIL_FROM'),
+      await sgMail.send({
+        from:    this.config.getOrThrow<string>('MAIL_FROM'),
         to:      email,
         subject: 'Bienvenido — Activa tu cuenta',
         html:    this.welcomeTemplate(firstName, tempPassword, verifyUrl),
@@ -51,8 +42,8 @@ export class MailService {
     newPassword: string,
   ): Promise<void> {
     try {
-      await this.transporter.sendMail({
-        from:    this.config.get('MAIL_FROM'),
+      await sgMail.send({
+        from:    this.config.getOrThrow<string>('MAIL_FROM'),
         to:      email,
         subject: 'Tu contraseña fue actualizada',
         html:    this.resetPasswordTemplate(firstName, newPassword),
