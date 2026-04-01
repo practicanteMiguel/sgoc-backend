@@ -25,13 +25,10 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get('DB_HOST'),
-        port: config.get<number>('DB_PORT'),
-        username: config.get('DB_USER'),
-        password: config.get('DB_PASS'),
-        database: config.get('DB_NAME'),
+        url: config.get('DATABASE_URL'),
+        ssl: { rejectUnauthorized: false },
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: config.get('NODE_ENV') === 'development', // solo en dev
+        synchronize: config.get('NODE_ENV') === 'development',
         logging: config.get('NODE_ENV') === 'development',
       }),
     }),
