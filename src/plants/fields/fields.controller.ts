@@ -33,35 +33,35 @@ export class FieldsController {
   }
 
   @Post()
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Crear planta' })
   create(@Body() dto: CreateFieldDto, @CurrentUser() user: User) {
     return this.fieldsService.create(dto, user);
   }
 
   @Patch(':id')
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Actualizar datos de la planta' })
   update(@Param('id') id: string, @Body() dto: UpdateFieldDto) {
     return this.fieldsService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('admin', 'module_manager')
   @ApiOperation({ summary: 'Eliminar planta (soft delete)' })
   remove(@Param('id') id: string) {
     return this.fieldsService.remove(id);
   }
 
   @Post(':id/supervisor')
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Asignar supervisor a la planta' })
   assignSupervisor(@Param('id') id: string, @Body() dto: AssignSupervisorDto) {
     return this.fieldsService.assignSupervisor(id, dto.user_id);
   }
 
   @Delete(':id/supervisor')
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Remover supervisor de la planta' })
   removeSupervisor(@Param('id') id: string) {
     return this.fieldsService.removeSupervisor(id);

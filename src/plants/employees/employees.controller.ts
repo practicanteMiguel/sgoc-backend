@@ -37,42 +37,42 @@ export class EmployeesController {
   }
 
   @Post()
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Crear empleado (opcionalmente asignar planta)' })
   create(@Body() dto: CreateEmployeeDto, @CurrentUser() user: User) {
     return this.employeesService.create(dto, user);
   }
 
   @Patch(':id')
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Actualizar datos del empleado' })
   update(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
     return this.employeesService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('admin', 'module_manager')
   @ApiOperation({ summary: 'Eliminar empleado (soft delete)' })
   remove(@Param('id') id: string) {
     return this.employeesService.remove(id);
   }
 
   @Post(':id/field')
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Asignar empleado a una planta' })
   assignToField(@Param('id') id: string, @Body() dto: AssignFieldDto) {
     return this.employeesService.assignToField(id, dto.field_id);
   }
 
   @Patch(':id/field')
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Cambiar empleado de planta' })
   changeField(@Param('id') id: string, @Body() dto: AssignFieldDto) {
     return this.employeesService.changeField(id, dto.field_id);
   }
 
   @Delete(':id/field')
-  @Roles('admin', 'coordinator')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Remover empleado de su planta actual' })
   removeFromField(@Param('id') id: string) {
     return this.employeesService.removeFromField(id);
