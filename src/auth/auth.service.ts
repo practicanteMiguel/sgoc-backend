@@ -71,7 +71,7 @@ export class AuthService {
         phone:          user.phone,
         position:       user.position,
         module:         user.module,
-        field:          user.field,
+        field_id:       user.field_id,
         roles,
         is_first_login: user.is_first_login,
       },

@@ -63,7 +63,7 @@ export class UsersService {
       phone:      user.phone,
       position:   user.position,
       module:     user.module,
-      field:      user.field,
+      field_id:   user.field_id,
       user_roles: user.user_roles.map(ur => ({
         role: { name: ur.role.name, slug: ur.role.slug },
       })),
@@ -84,8 +84,8 @@ export class UsersService {
 
     if (dto.role_slug === 'module_manager' && !dto.module)
       throw new BadRequestException('El módulo es obligatorio para encargados');
-    if (dto.role_slug === 'supervisor' && !dto.field)
-      throw new BadRequestException('El campo es obligatorio para supervisores');
+    if (dto.role_slug === 'supervisor' && !dto.field_id)
+      throw new BadRequestException('El campo (field_id) es obligatorio para supervisores');
 
     const tempPassword       = dto.temp_password ?? this.generateTempPassword();
     const password_hash       = await bcrypt.hash(tempPassword, 10);
@@ -99,7 +99,7 @@ export class UsersService {
       phone:                    dto.phone,
       position:                 dto.position,
       module:                   dto.module,
-      field:                    dto.field,
+      field_id:                 dto.field_id,
       is_active:                true,
       is_email_verified:        false,
       is_first_login:           true,

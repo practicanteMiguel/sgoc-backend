@@ -34,8 +34,9 @@ export class User {
   @Column({ nullable: true })
   module!: string;
 
-  @Column({ nullable: true })
-  field!: string;
+  // UUID de la planta asignada (solo para supervisores)
+  @Column({ nullable: true, type: 'uuid', name: 'field_id' })
+  field_id!: string;
 
   @Column({ default: true })
   is_active!: boolean;

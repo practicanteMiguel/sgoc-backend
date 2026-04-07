@@ -6,6 +6,13 @@ import { seedPermissions } from './02-permissions.seed';
 import { seedModules } from './03-modules.seed';
 import { seedRolePermissions } from './04-role-permissions.seed';
 import { seedAdmin } from './05-admin.seed';
+import { seedFields } from './06-fields.seed';
+import { seedEmployeesDina } from './07-employees-dina.seed';
+import { seedEmployeesPlanDeGas } from './08-employees-ptg.seed';
+import { seedEmployeesRioCeibas } from './09-employees-rioceibas.seed';
+import { seedEmployeesSanFrancisco } from './10-employees-sanfrancisco.seed';
+import { seedEmployeesTello } from './11-employees-tello.seed';
+import { seedEmployeesYaguara } from './12-employees-yaguara.seed';
 
 dotenv.config();
 
@@ -26,6 +33,13 @@ async function runSeeds() {
   await seedModules(dataSource);
   await seedRolePermissions(dataSource);
   await seedAdmin(dataSource);
+  await seedFields(dataSource);
+  await seedEmployeesDina(dataSource);
+  await seedEmployeesPlanDeGas(dataSource);
+  await seedEmployeesRioCeibas(dataSource);
+  await seedEmployeesSanFrancisco(dataSource);
+  await seedEmployeesTello(dataSource);
+  await seedEmployeesYaguara(dataSource);
 
   console.log('\n🎉 Seeds completados correctamente');
   await dataSource.destroy();

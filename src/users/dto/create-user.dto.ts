@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, IsOptional, IsIn, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -34,7 +34,7 @@ export class CreateUserDto {
   @IsOptional() @IsString()
   module?: string;
 
-  @ApiPropertyOptional({ description: 'Obligatorio para supervisor' })
-  @IsOptional() @IsString()
-  field?: string;
+  @ApiPropertyOptional({ description: 'UUID de la planta — obligatorio para supervisor' })
+  @IsOptional() @IsUUID()
+  field_id?: string;
 }

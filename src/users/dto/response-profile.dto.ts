@@ -15,6 +15,6 @@ export class ProfileResponseDto {
   phone!: string;
   position!: string;
   module!: string;
-  field!: string;
+  field_id!: string;
   user_roles!: UserRoleProfileDto[];
 }

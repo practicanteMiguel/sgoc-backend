@@ -10,6 +10,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { MailModule } from './mail/mail.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { PlantsModule } from './plants/plants.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     AuditModule,
     NotificationsModule,
     MailModule,
+    PlantsModule,
   ],
   providers: [
     // Registro global — corre en TODOS los controllers automáticamente
