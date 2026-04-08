@@ -109,6 +109,9 @@ export class Employee {
   @Column({ nullable: true })
   inclusion!: string;
 
+  @Column({ default: true })
+  is_active!: boolean;
+
   // Certificado de residencia
   @Column({ nullable: true })
   lugar_exp_certificado_residencia!: string;

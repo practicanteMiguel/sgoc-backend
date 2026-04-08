@@ -130,6 +130,10 @@ export class UpdateEmployeeDto {
   @ApiPropertyOptional()
   @IsOptional() @IsString()
   inclusion?: string;
+  
+  @ApiPropertyOptional()
+  @IsOptional() @IsBoolean()
+  is_active?: boolean;
 
   // ── Certificado de residencia ─────────────────────────────────
   @ApiPropertyOptional()

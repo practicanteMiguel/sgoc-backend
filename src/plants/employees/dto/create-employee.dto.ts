@@ -135,6 +135,10 @@ export class CreateEmployeeDto {
   @IsOptional() @IsString()
   inclusion?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional() @IsBoolean()
+  is_active?: boolean;
+
   // ── Certificado de residencia ─────────────────────────────────
   @ApiPropertyOptional()
   @IsOptional() @IsString()
