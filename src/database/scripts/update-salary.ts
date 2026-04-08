@@ -23,6 +23,8 @@ async function run() {
      
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows: any[] = XLSX.utils.sheet_to_json(sheet);
+    console.log(`📊 Filas leídas del Excel: ${rows.length}`);
+    console.log('nombre de las')
  
 
     // 🧠 Mapear cedula -> salario

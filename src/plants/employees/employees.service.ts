@@ -41,21 +41,17 @@ export class EmployeesService {
   }
 
   async create(dto: CreateEmployeeDto, currentUser: User) {
+    const { field_id, ...fields } = dto;
     const emp = this.employeeRepo.create({
-      identification_number: dto.identification_number,
-      first_name:            dto.first_name,
-      last_name:             dto.last_name,
-      position:              dto.position,
-      aux_trans:             dto.aux_trans ?? false,
-      aux_hab:               dto.aux_hab   ?? false,
-      aux_ali:               dto.aux_ali   ?? false,
-      salario_base:          dto.salario_base,
-      schedules:             dto.schedules,
-      created_by:            currentUser,
+      ...fields,
+      aux_trans:  fields.aux_trans ?? false,
+      aux_hab:    fields.aux_hab   ?? false,
+      aux_ali:    fields.aux_ali   ?? false,
+      created_by: currentUser,
     });
 
-    if (dto.field_id) {
-      const field = await this.fieldRepo.findOne({ where: { id: dto.field_id } });
+    if (field_id) {
+      const field = await this.fieldRepo.findOne({ where: { id: field_id } });
       if (!field) throw new NotFoundException('Planta no encontrada');
       emp.field = field;
     }

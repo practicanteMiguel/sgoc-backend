@@ -4,10 +4,8 @@ import { Field } from '@/plants/fields/entities/field.entity';
 
 const FIELD_ID = '25766b54-f8fe-4f1e-b050-da1f0ba49bf9';
 
-const employeesData: Omit<
-  Employee,
-  'id' | 'field' | 'created_by' | 'created_at' | 'updated_at' | 'deleted_at'
->[] = [
+const employeesData: Partial<
+  Employee>[] = [
   // ── 6x6 ──────────────────────────────────────────────────────────────────
   {
     identification_number: '83238152',
