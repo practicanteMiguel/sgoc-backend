@@ -149,6 +149,23 @@ export class DeliverablesService {
   }
 
   // -----------------------------------------------------------------------
+  // Registra quien vio el entregable y cuando.
+  // Lo llama el coordinador al abrir el modal de detalle.
+  // -----------------------------------------------------------------------
+  async markViewed(id: string, currentUser: User) {
+    const d = await this.deliverableRepo.findOne({
+      where: { id },
+      relations: ['field', 'supervisor', 'last_viewed_by'],
+    });
+    if (!d) throw new NotFoundException('Entregable no encontrado');
+
+    d.last_viewed_by = currentUser;
+    d.last_viewed_at = new Date();
+
+    return this.deliverableRepo.save(d);
+  }
+
+  // -----------------------------------------------------------------------
   // Revierte un no_aplica a pendiente (por si el supervisor se equivoco).
   // -----------------------------------------------------------------------
   async unwaive(id: string) {

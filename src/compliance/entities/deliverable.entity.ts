@@ -68,6 +68,14 @@ export class Deliverable {
   @JoinColumn({ name: 'waived_by' })
   waived_by!: User;
 
+  // Ultimo coordinador/admin que abrio el modal de detalle del entregable
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'last_viewed_by' })
+  last_viewed_by!: User;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  last_viewed_at!: Date;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 

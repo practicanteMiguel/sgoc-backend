@@ -118,4 +118,15 @@ export class DeliverablesController {
   unwaive(@Param('id') id: string) {
     return this.svc.unwaive(id);
   }
+
+  // ------------------------------------------------------------------
+  // El coordinador abre el modal de detalle -> se registra quien lo vio.
+  // La tarjeta del supervisor muestra: "Visto por Juan Garcia - 09 abr. 14:30"
+  // ------------------------------------------------------------------
+  @Patch(':id/viewed')
+  @Roles('admin', 'coordinator', 'module_manager')
+  @ApiOperation({ summary: 'Registrar que el coordinador/admin vio el entregable' })
+  markViewed(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.svc.markViewed(id, user);
+  }
 }
