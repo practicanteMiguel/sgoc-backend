@@ -77,6 +77,8 @@ export class DeliverablesService {
       .createQueryBuilder('d')
       .leftJoinAndSelect('d.field', 'field')
       .leftJoinAndSelect('d.supervisor', 'supervisor')
+      .leftJoinAndSelect('d.waived_by', 'waived_by')
+      .leftJoinAndSelect('d.last_viewed_by', 'last_viewed_by')
       .orderBy('d.anio', 'DESC')
       .addOrderBy('d.mes', 'DESC');
 
@@ -92,7 +94,7 @@ export class DeliverablesService {
   async findOne(id: string) {
     const d = await this.deliverableRepo.findOne({
       where: { id },
-      relations: ['field', 'supervisor'],
+      relations: ['field', 'supervisor', 'waived_by', 'last_viewed_by'],
     });
     if (!d) throw new NotFoundException('Entregable no encontrado');
     return d;
