@@ -65,6 +65,9 @@ importers:
       googleapis:
         specifier: ^171.4.0
         version: 171.4.0
+      multer:
+        specifier: ^2.1.1
+        version: 2.1.1
       nodemailer:
         specifier: ^8.0.3
         version: 8.0.3
