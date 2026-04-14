@@ -31,7 +31,7 @@ import { ComplianceModule } from './compliance/compliance.module';
         ssl: { rejectUnauthorized: false },
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: config.get('NODE_ENV') === 'development',
-        logging: config.get('NODE_ENV') === 'development',
+        logging: false,
       }),
     }),
 

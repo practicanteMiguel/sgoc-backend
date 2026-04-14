@@ -9,6 +9,8 @@ import { DisponibilidadRecord } from './entities/disponibilidad-record.entity';
 import { HorasExtraRecord } from './entities/horas-extra-record.entity';
 import { Schedule } from './entities/schedule.entity';
 import { ScheduleDay } from './entities/schedule-day.entity';
+import { EvidenceFile } from './entities/evidence-file.entity';
+import { DriveFolderCache } from './entities/drive-folder-cache.entity';
 
 // Dependencias externas
 import { Field } from '../plants/fields/entities/field.entity';
@@ -21,9 +23,14 @@ import { FormatsService } from './formats.service';
 import { FormatsController } from './formats.controller';
 import { SchedulesService } from './schedules.service';
 import { SchedulesController } from './schedules.controller';
+import { EvidencesService } from './evidences.service';
+import { EvidencesController } from './evidences.controller';
+
+import { DriveModule } from '../drive/drive.module';
 
 @Module({
   imports: [
+    DriveModule,
     TypeOrmModule.forFeature([
       Deliverable,
       TaxiRecord,
@@ -32,6 +39,8 @@ import { SchedulesController } from './schedules.controller';
       HorasExtraRecord,
       Schedule,
       ScheduleDay,
+      EvidenceFile,
+      DriveFolderCache,
       Field,
       Employee,
     ]),
@@ -40,11 +49,13 @@ import { SchedulesController } from './schedules.controller';
     DeliverablesController,
     FormatsController,
     SchedulesController,
+    EvidencesController,
   ],
   providers: [
     DeliverablesService,
     FormatsService,
     SchedulesService,
+    EvidencesService,
   ],
 })
 export class ComplianceModule {}
