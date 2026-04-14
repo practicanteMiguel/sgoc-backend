@@ -2,8 +2,8 @@ import {
   Controller, Get, Post, Body, Param, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
 import { FormatsService } from './formats.service';
 import { BulkTaxiDto } from './dto/taxi-row.dto';
 import { BulkPernoctacionDto } from './dto/pernoctacion-row.dto';

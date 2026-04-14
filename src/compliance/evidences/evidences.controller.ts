@@ -5,13 +5,13 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../users/entities/user.entity';
 import { EvidencesService } from './evidences.service';
 import { UploadEvidenceDto } from './dto/upload-evidence.dto';
-import { EvidenceCategory } from './entities/evidence-file.entity';
+import { EvidenceCategory } from './evidence-file.entity';
 
 @ApiTags('Compliance - Evidences')
 @ApiBearerAuth()

@@ -6,7 +6,7 @@ import {
 } from 'typeorm';
 import { Field } from '../../plants/fields/entities/field.entity';
 import { User } from '../../users/entities/user.entity';
-import { Deliverable } from './deliverable.entity';
+import { Deliverable } from '../deliverables/deliverable.entity';
 import { ScheduleDay } from './schedule-day.entity';
 
 export enum ScheduleTipo {

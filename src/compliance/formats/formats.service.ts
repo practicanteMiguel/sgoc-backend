@@ -3,12 +3,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Deliverable, FormatType } from './entities/deliverable.entity';
-import { TaxiRecord } from './entities/taxi-record.entity';
-import { PernoctacionRecord } from './entities/pernoctacion-record.entity';
-import { DisponibilidadRecord } from './entities/disponibilidad-record.entity';
-import { HorasExtraRecord } from './entities/horas-extra-record.entity';
-import { Employee } from '../plants/employees/entities/employee.entity';
+import { Deliverable, FormatType } from '../deliverables/deliverable.entity';
+import { TaxiRecord } from './taxi-record.entity';
+import { PernoctacionRecord } from './pernoctacion-record.entity';
+import { DisponibilidadRecord } from './disponibilidad-record.entity';
+import { HorasExtraRecord } from './horas-extra-record.entity';
+import { Employee } from '../../plants/employees/entities/employee.entity';
 import { BulkTaxiDto } from './dto/taxi-row.dto';
 import { BulkPernoctacionDto } from './dto/pernoctacion-row.dto';
 import { BulkDisponibilidadDto } from './dto/disponibilidad-row.dto';

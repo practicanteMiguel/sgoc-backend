@@ -2,7 +2,7 @@ import {
   Entity, PrimaryGeneratedColumn, Column,
   CreateDateColumn, ManyToOne, JoinColumn,
 } from 'typeorm';
-import { Deliverable } from './deliverable.entity';
+import { Deliverable } from '../deliverables/deliverable.entity';
 import { Employee } from '../../plants/employees/entities/employee.entity';
 
 @Entity('taxi_records')

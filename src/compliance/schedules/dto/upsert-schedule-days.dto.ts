@@ -1,6 +1,6 @@
 import { IsArray, IsDateString, IsEnum, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Turno } from '../entities/schedule-day.entity';
+import { Turno } from '../schedule-day.entity';
 
 export class ScheduleDayRowDto {
   @IsUUID()

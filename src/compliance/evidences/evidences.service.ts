@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DriveService } from '../drive/drive.service';
-import { EvidenceFile, EvidenceCategory } from './entities/evidence-file.entity';
-import { DriveFolderCache } from './entities/drive-folder-cache.entity';
-import { Field } from '../plants/fields/entities/field.entity';
-import { User } from '../users/entities/user.entity';
+import { DriveService } from '../../drive/drive.service';
+import { EvidenceFile, EvidenceCategory } from './evidence-file.entity';
+import { DriveFolderCache } from './drive-folder-cache.entity';
+import { Field } from '../../plants/fields/entities/field.entity';
+import { User } from '../../users/entities/user.entity';
 import { UploadEvidenceDto } from './dto/upload-evidence.dto';
 
 const MONTH_NAMES: Record<number, string> = {

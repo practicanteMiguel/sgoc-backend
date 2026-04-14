@@ -5,9 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   Deliverable, DeliverableStatus, FormatType, REQUIRED_FORMATS,
-} from './entities/deliverable.entity';
-import { Field } from '../plants/fields/entities/field.entity';
-import { User } from '../users/entities/user.entity';
+} from './deliverable.entity';
+import { Field } from '../../plants/fields/entities/field.entity';
+import { User } from '../../users/entities/user.entity';
 import { GenerateMonthDto } from './dto/generate-month.dto';
 import { WaiveDeliverableDto } from './dto/waive-deliverable.dto';
 

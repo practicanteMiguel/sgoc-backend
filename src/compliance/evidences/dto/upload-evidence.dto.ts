@@ -1,7 +1,7 @@
 import { IsUUID, IsInt, Min, Max, IsOptional, IsEnum } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { EvidenceCategory } from '../entities/evidence-file.entity';
+import { EvidenceCategory } from '../evidence-file.entity';
 
 const toNumberOrUndefined = ({ value }: { value: any }) =>
   value === '' || value === null || value === undefined ? undefined : Number(value);

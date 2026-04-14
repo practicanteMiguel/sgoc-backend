@@ -2,14 +2,14 @@ import {
   Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../users/entities/user.entity';
 import { DeliverablesService } from './deliverables.service';
 import { GenerateMonthDto } from './dto/generate-month.dto';
-import { DeliverableStatus, FormatType } from './entities/deliverable.entity';
+import { DeliverableStatus, FormatType } from './deliverable.entity';
 import { WaiveDeliverableDto } from './dto/waive-deliverable.dto';
 
 @ApiTags('Compliance - Deliverables')

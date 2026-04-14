@@ -2,14 +2,14 @@ import {
   Controller, Get, Post, Put, Patch, Body, Param, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../users/entities/user.entity';
 import { SchedulesService } from './schedules.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpsertScheduleDaysDto } from './dto/upsert-schedule-days.dto';
-import { ScheduleTipo } from './entities/schedule.entity';
+import { ScheduleTipo } from './schedule.entity';
 
 @ApiTags('Compliance - Schedules')
 @ApiBearerAuth()

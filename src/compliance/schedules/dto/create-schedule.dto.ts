@@ -1,6 +1,6 @@
 import { IsEnum, IsInt, IsUUID, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ScheduleTipo } from '../entities/schedule.entity';
+import { ScheduleTipo } from '../schedule.entity';
 
 export class CreateScheduleDto {
   @IsUUID()

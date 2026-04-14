@@ -3,12 +3,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Schedule, ScheduleEstado, ScheduleTipo } from './entities/schedule.entity';
-import { ScheduleDay } from './entities/schedule-day.entity';
-import { Deliverable, FormatType } from './entities/deliverable.entity';
-import { Field } from '../plants/fields/entities/field.entity';
-import { Employee } from '../plants/employees/entities/employee.entity';
-import { User } from '../users/entities/user.entity';
+import { Schedule, ScheduleEstado, ScheduleTipo } from './schedule.entity';
+import { ScheduleDay } from './schedule-day.entity';
+import { Deliverable, FormatType } from '../deliverables/deliverable.entity';
+import { Field } from '../../plants/fields/entities/field.entity';
+import { Employee } from '../../plants/employees/entities/employee.entity';
+import { User } from '../../users/entities/user.entity';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpsertScheduleDaysDto } from './dto/upsert-schedule-days.dto';
 
