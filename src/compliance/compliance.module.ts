@@ -27,10 +27,13 @@ import { EvidencesService } from './evidences/evidences.service';
 import { EvidencesController } from './evidences/evidences.controller';
 
 import { DriveModule } from '../drive/drive.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { DeliverableRemindersService } from './deliverables/deliverable-reminders.service';
 
 @Module({
   imports: [
     DriveModule,
+    NotificationsModule,
     TypeOrmModule.forFeature([
       Deliverable,
       TaxiRecord,
@@ -53,6 +56,7 @@ import { DriveModule } from '../drive/drive.module';
   ],
   providers: [
     DeliverablesService,
+    DeliverableRemindersService,
     FormatsService,
     SchedulesService,
     EvidencesService,

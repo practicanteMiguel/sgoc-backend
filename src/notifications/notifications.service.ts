@@ -334,6 +334,24 @@ export class NotificationsService implements OnModuleInit {
       is_read: false,
     });
     notif.user = { id: payload.user_id } as any;
-    return this.notifRepo.save(notif);
+    const saved = await this.notifRepo.save(notif);
+
+    this.gateway.sendToUser(payload.user_id, {
+      id: saved.id,
+      title: saved.title,
+      message: saved.message,
+      priority: saved.priority,
+      type: saved.type,
+      is_read: false,
+      sender: null,
+    });
+
+    void this.sendWebPushToUser(payload.user_id, {
+      title: saved.title,
+      body: saved.message,
+      data: { notification_id: saved.id, url: '/notifications', ...payload.data },
+    });
+
+    return saved;
   }
 }

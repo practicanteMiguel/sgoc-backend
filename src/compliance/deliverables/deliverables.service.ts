@@ -10,12 +10,30 @@ import { Field } from '../../plants/fields/entities/field.entity';
 import { User } from '../../users/entities/user.entity';
 import { GenerateMonthDto } from './dto/generate-month.dto';
 import { WaiveDeliverableDto } from './dto/waive-deliverable.dto';
+import { NotificationsService } from '../../notifications/notifications.service';
+import { NotificationPriority } from '../../notifications/entities/enum/notification-priority.enum';
+import { NotificationType } from '../../notifications/entities/enum/notification-type.enum';
+
+const FORMAT_LABELS: Record<FormatType, string> = {
+  [FormatType.TAXI]:           'Taxi',
+  [FormatType.PERNOCTACION]:   'Pernoctacion',
+  [FormatType.HORAS_EXTRA]:    'Horas Extra',
+  [FormatType.DISPONIBILIDAD]: 'Disponibilidad',
+  [FormatType.SCHEDULE_6X6]:   'Horario 6x6',
+  [FormatType.SCHEDULE_5X2]:   'Horario 5x2',
+};
+
+const MONTH_NAMES = [
+  '', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
 
 @Injectable()
 export class DeliverablesService {
   constructor(
     @InjectRepository(Deliverable) private deliverableRepo: Repository<Deliverable>,
     @InjectRepository(Field)       private fieldRepo: Repository<Field>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // -----------------------------------------------------------------------
@@ -41,7 +59,7 @@ export class DeliverablesService {
     const supervisor = field.supervisor ?? currentUser;
 
     const dueDate = dto.due_date
-      ? new Date(dto.due_date)
+      ? this.parseDateLocal(dto.due_date)
       : this.lastDayOfMonth(dto.anio, dto.mes);
 
     const rows = REQUIRED_FORMATS.map((fmt) =>
@@ -57,6 +75,22 @@ export class DeliverablesService {
     );
 
     const saved = await this.deliverableRepo.save(rows);
+
+    if (field.supervisor) {
+      const list = REQUIRED_FORMATS.map((fmt) => `- ${FORMAT_LABELS[fmt as FormatType]}`).join('\n');
+      const dueDateStr = dueDate.toISOString().slice(0, 10);
+      void this.notificationsService.createSystem({
+        user_id: field.supervisor.id,
+        title: `Entregables de ${MONTH_NAMES[dto.mes]} ${dto.anio} cargados - ${field.name}`,
+        message:
+          `Se han generado los entregables de ${MONTH_NAMES[dto.mes]} ${dto.anio} para ${field.name}. ` +
+          `Tienes hasta el ${dueDateStr} para subir los siguientes formatos:\n\n${list}`,
+        priority: NotificationPriority.MEDIUM,
+        type: NotificationType.SYSTEM,
+        data: { field_id: dto.field_id, mes: dto.mes, anio: dto.anio },
+      });
+    }
+
     return {
       message: `6 entregables generados para ${field.name} - ${dto.mes}/${dto.anio}`,
       deliverables: saved,
@@ -271,5 +305,11 @@ export class DeliverablesService {
   // -----------------------------------------------------------------------
   private lastDayOfMonth(anio: number, mes: number): Date {
     return new Date(anio, mes, 0); // dia 0 del mes siguiente = ultimo dia del mes actual
+  }
+
+  // Parsea YYYY-MM-DD como fecha local para evitar desfase de timezone UTC
+  private parseDateLocal(str: string): Date {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
   }
 }

@@ -1,13 +1,14 @@
 import {
   Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { DeliverablesService } from './deliverables.service';
+import { DeliverableRemindersService } from './deliverable-reminders.service';
 import { GenerateMonthDto } from './dto/generate-month.dto';
 import { DeliverableStatus, FormatType } from './deliverable.entity';
 import { WaiveDeliverableDto } from './dto/waive-deliverable.dto';
@@ -17,7 +18,29 @@ import { WaiveDeliverableDto } from './dto/waive-deliverable.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('compliance/deliverables')
 export class DeliverablesController {
-  constructor(private readonly svc: DeliverablesService) {}
+  constructor(
+    private readonly svc: DeliverablesService,
+    private readonly reminders: DeliverableRemindersService,
+  ) {}
+
+  // ------------------------------------------------------------------
+  // TEST: Dispara el cron de recordatorios con una fecha simulada.
+  // simulate_date = YYYY-MM-DD. Si se omite usa la fecha real de hoy.
+  // Retorna que notificaciones se enviaron y a quien.
+  // ------------------------------------------------------------------
+  @Post('reminders/trigger')
+  @Roles('admin')
+  @ApiOperation({
+    summary: '[TEST] Simular cron de recordatorios para una fecha dada',
+    description:
+      'Ejecuta la logica de recordatorios como si "hoy" fuera la fecha indicada. ' +
+      'Busca deliverables con due_date = simulate_date (caso deadline) y due_date = simulate_date+3 (caso warning). ' +
+      'Retorna todas las notificaciones enviadas.',
+  })
+  @ApiQuery({ name: 'simulate_date', required: false, description: 'Fecha simulada YYYY-MM-DD. Omitir para usar hoy.' })
+  triggerReminders(@Query('simulate_date') simulateDate?: string) {
+    return this.reminders.triggerReminders(simulateDate);
+  }
 
   // ------------------------------------------------------------------
   // Genera los 6 entregables pendientes para una planta en un mes.

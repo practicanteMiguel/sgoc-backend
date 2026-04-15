@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
@@ -34,6 +35,8 @@ import { ComplianceModule } from './compliance/compliance.module';
         logging: false,
       }),
     }),
+
+    ScheduleModule.forRoot(),
 
     // Módulos de la aplicación
     AuthModule,
