@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
+  Injectable, NotFoundException, BadRequestException, ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -42,6 +42,13 @@ export class EmployeesService {
 
   async create(dto: CreateEmployeeDto, currentUser: User) {
     const { field_id, ...fields } = dto;
+
+    const existing = await this.employeeRepo.findOne({
+      where: { identification_number: dto.identification_number },
+      withDeleted: true,
+    });
+    if (existing) throw new ConflictException(`Ya existe un empleado con el numero de documento ${dto.identification_number}`);
+
     const emp = this.employeeRepo.create({
       ...fields,
       aux_trans:  fields.aux_trans ?? false,
