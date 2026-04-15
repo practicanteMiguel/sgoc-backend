@@ -7,6 +7,10 @@ export class UserRoleProfileDto {
   role!: RoleInfoDto;
 }
 
+export class FieldInfoDto {
+  name!: string;
+}
+
 export class ProfileResponseDto {
   id!: string;
   email!: string;
@@ -15,6 +19,6 @@ export class ProfileResponseDto {
   phone!: string;
   position!: string;
   module!: string;
-  field_id!: string;
+  field!: FieldInfoDto | null;
   user_roles!: UserRoleProfileDto[];
 }

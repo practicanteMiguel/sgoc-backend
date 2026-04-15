@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 import { User } from './entities/user.entity';
 import { UserRole } from '../roles/entities/user-role.entity';
 import { Role } from '../roles/entities/role.entity';
+import { Field } from '../plants/fields/entities/field.entity';
 import { MailService } from '../mail/mail.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -21,6 +22,7 @@ export class UsersService {
     @InjectRepository(User)     private userRepo: Repository<User>,
     @InjectRepository(UserRole) private userRoleRepo: Repository<UserRole>,
     @InjectRepository(Role)     private roleRepo: Repository<Role>,
+    @InjectRepository(Field)    private fieldRepo: Repository<Field>,
     private readonly mailService: MailService,
   ) {}
 
@@ -55,6 +57,10 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('Usuario no encontrado');
 
+    const field = user.field_id
+      ? await this.fieldRepo.findOne({ where: { id: user.field_id }, select: ['name'] })
+      : null;
+
     return {
       id:         user.id,
       email:      user.email,
@@ -63,7 +69,7 @@ export class UsersService {
       phone:      user.phone,
       position:   user.position,
       module:     user.module,
-      field_id:   user.field_id,
+      field:      field ? { name: field.name } : null,
       user_roles: user.user_roles.map(ur => ({
         role: { name: ur.role.name, slug: ur.role.slug },
       })),
