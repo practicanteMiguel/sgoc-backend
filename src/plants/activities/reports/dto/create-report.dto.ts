@@ -1,16 +1,20 @@
-import { IsUUID, IsString, IsOptional, IsBoolean } from 'class-validator';
+import {
+  IsUUID, IsString, IsOptional, IsBoolean,
+  IsArray, ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class CreateReportDto {
+export class ReportActivityDto {
   @IsUUID()
-  log_id!: string;
-
-  @IsString()
-  @IsOptional()
-  additional_resource?: string;
+  activity_id!: string;
 
   @IsString()
   @IsOptional()
   requirement?: string;
+
+  @IsString()
+  @IsOptional()
+  additional_resource?: string;
 
   @IsString()
   @IsOptional()
@@ -19,4 +23,14 @@ export class CreateReportDto {
   @IsBoolean()
   @IsOptional()
   is_scheduled?: boolean;
+}
+
+export class CreateReportDto {
+  @IsUUID()
+  log_id!: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReportActivityDto)
+  activities!: ReportActivityDto[];
 }

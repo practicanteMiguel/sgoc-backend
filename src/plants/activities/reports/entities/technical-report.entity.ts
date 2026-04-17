@@ -1,5 +1,5 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
+  Entity, PrimaryGeneratedColumn,
   CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
   ManyToOne, JoinColumn,
 } from 'typeorm';
@@ -19,18 +19,6 @@ export class TechnicalReport {
   @ManyToOne(() => Crew, { nullable: false, onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'crew_id' })
   crew!: Crew;
-
-  @Column({ nullable: true })
-  additional_resource!: string;
-
-  @Column({ nullable: true })
-  requirement!: string;
-
-  @Column({ nullable: true })
-  progress!: string;
-
-  @Column({ type: 'boolean', default: false })
-  is_scheduled!: boolean;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'created_by' })

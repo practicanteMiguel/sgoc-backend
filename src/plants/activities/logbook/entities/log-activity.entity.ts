@@ -35,6 +35,18 @@ export class LogActivity {
   @Column({ nullable: true, type: 'text' })
   notes!: string;
 
+  @Column({ nullable: true, type: 'text' })
+  requirement!: string;
+
+  @Column({ nullable: true, type: 'text' })
+  additional_resource!: string;
+
+  @Column({ nullable: true })
+  progress!: string;
+
+  @Column({ type: 'boolean', default: false })
+  is_scheduled!: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 

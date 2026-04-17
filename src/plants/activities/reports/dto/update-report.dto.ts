@@ -1,4 +1,10 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateReportDto } from './create-report.dto';
+import { IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ReportActivityDto } from './create-report.dto';
 
-export class UpdateReportDto extends PartialType(CreateReportDto) {}
+export class UpdateReportDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReportActivityDto)
+  activities!: ReportActivityDto[];
+}
