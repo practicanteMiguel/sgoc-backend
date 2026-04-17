@@ -41,7 +41,7 @@ export class ReportsService {
         requirement:         item.requirement,
         additional_resource: item.additional_resource,
         progress:            item.progress,
-        is_scheduled:        item.is_scheduled ?? false,
+        is_scheduled:        item.is_scheduled ?? true,
       });
     }
 

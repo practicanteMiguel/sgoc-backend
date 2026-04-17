@@ -44,7 +44,7 @@ export class LogActivity {
   @Column({ nullable: true })
   progress!: string;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: 'boolean', default: true })
   is_scheduled!: boolean;
 
   @CreateDateColumn({ type: 'timestamptz' })
