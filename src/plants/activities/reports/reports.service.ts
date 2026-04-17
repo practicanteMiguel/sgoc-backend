@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TechnicalReport } from './entities/technical-report.entity';
-import { LogActivity } from '../logbook/entities/log-activity.entity';
+import { WeeklyLog } from '../logbook/entities/weekly-log.entity';
 import { User } from '../../../users/entities/user.entity';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -11,19 +11,25 @@ import { UpdateReportDto } from './dto/update-report.dto';
 export class ReportsService {
   constructor(
     @InjectRepository(TechnicalReport) private reportRepo: Repository<TechnicalReport>,
-    @InjectRepository(LogActivity)     private activityRepo: Repository<LogActivity>,
+    @InjectRepository(WeeklyLog)       private logRepo: Repository<WeeklyLog>,
   ) {}
 
   async create(dto: CreateReportDto, currentUser: User) {
-    const activity = await this.activityRepo.findOne({
-      where: { id: dto.activity_id },
-      relations: ['weekly_log', 'weekly_log.crew'],
+    const log = await this.logRepo.findOne({
+      where: { id: dto.log_id },
+      relations: ['crew', 'crew.field', 'activities'],
     });
-    if (!activity) throw new NotFoundException('Activity not found');
+    if (!log) throw new NotFoundException('Weekly log not found');
+
+    const existing = await this.reportRepo.findOne({
+      where: { weekly_log: { id: dto.log_id } },
+    });
+    if (existing)
+      throw new ConflictException('A technical report already exists for this weekly log');
 
     const report = this.reportRepo.create({
-      activity,
-      crew:                activity.weekly_log.crew,
+      weekly_log:          log,
+      crew:                log.crew,
       additional_resource: dto.additional_resource,
       requirement:         dto.requirement,
       progress:            dto.progress,
@@ -39,8 +45,8 @@ export class ReportsService {
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.crew', 'crew')
       .leftJoinAndSelect('crew.field', 'field')
-      .leftJoinAndSelect('r.activity', 'activity')
-      .leftJoinAndSelect('activity.weekly_log', 'weekly_log')
+      .leftJoinAndSelect('r.weekly_log', 'weekly_log')
+      .leftJoinAndSelect('weekly_log.activities', 'activities')
       .where('r.deleted_at IS NULL')
       .orderBy('r.created_at', 'DESC')
       .skip((page - 1) * limit)
@@ -52,14 +58,17 @@ export class ReportsService {
 
     const cleaned = data.map((r) => ({
       ...r,
-      activity: {
-        id:          r.activity.id,
-        description: r.activity.description,
-        start_date:  r.activity.start_date,
-        end_date:    r.activity.end_date,
-        notes:       r.activity.notes,
-        week_number: r.activity.weekly_log.week_number,
-        year:        r.activity.weekly_log.year,
+      weekly_log: {
+        id:          r.weekly_log.id,
+        week_number: r.weekly_log.week_number,
+        year:        r.weekly_log.year,
+        activities:  r.weekly_log.activities.map((a) => ({
+          id:          a.id,
+          description: a.description,
+          start_date:  a.start_date,
+          end_date:    a.end_date,
+          notes:       a.notes,
+        })),
       },
     }));
 
@@ -69,20 +78,26 @@ export class ReportsService {
   async findOne(id: string) {
     const report = await this.reportRepo.findOne({
       where: { id },
-      relations: ['crew', 'crew.field', 'activity', 'activity.weekly_log', 'created_by'],
+      relations: ['crew', 'crew.field', 'weekly_log', 'weekly_log.activities', 'created_by'],
     });
     if (!report) throw new NotFoundException('Report not found');
 
     return {
       ...report,
-      activity: {
-        id:          report.activity.id,
-        description: report.activity.description,
-        start_date:  report.activity.start_date,
-        end_date:    report.activity.end_date,
-        notes:       report.activity.notes,
-        week_number: report.activity.weekly_log.week_number,
-        year:        report.activity.weekly_log.year,
+      weekly_log: {
+        id:          report.weekly_log.id,
+        week_number: report.weekly_log.week_number,
+        year:        report.weekly_log.year,
+        activities:  report.weekly_log.activities.map((a) => ({
+          id:          a.id,
+          description: a.description,
+          start_date:  a.start_date,
+          end_date:    a.end_date,
+          notes:       a.notes,
+          image_before: a.image_before,
+          image_during: a.image_during,
+          image_after:  a.image_after,
+        })),
       },
     };
   }

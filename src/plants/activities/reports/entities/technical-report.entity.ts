@@ -3,7 +3,7 @@ import {
   CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
   ManyToOne, JoinColumn,
 } from 'typeorm';
-import { LogActivity } from '../../logbook/entities/log-activity.entity';
+import { WeeklyLog } from '../../logbook/entities/weekly-log.entity';
 import { Crew } from '../../crews/entities/crew.entity';
 import { User } from '../../../../users/entities/user.entity';
 
@@ -12,9 +12,9 @@ export class TechnicalReport {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ManyToOne(() => LogActivity, { nullable: false, onDelete: 'CASCADE', eager: false })
-  @JoinColumn({ name: 'activity_id' })
-  activity!: LogActivity;
+  @ManyToOne(() => WeeklyLog, { nullable: false, onDelete: 'CASCADE', eager: false })
+  @JoinColumn({ name: 'log_id' })
+  weekly_log!: WeeklyLog;
 
   @ManyToOne(() => Crew, { nullable: false, onDelete: 'CASCADE', eager: false })
   @JoinColumn({ name: 'crew_id' })

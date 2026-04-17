@@ -2,7 +2,7 @@ import { IsUUID, IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateReportDto {
   @IsUUID()
-  activity_id!: string;
+  log_id!: string;
 
   @IsString()
   @IsOptional()
