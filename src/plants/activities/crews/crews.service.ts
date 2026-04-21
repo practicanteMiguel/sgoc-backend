@@ -25,10 +25,11 @@ export class CrewsService {
     if (!field) throw new NotFoundException('Campo no encontrado');
 
     const crew = this.crewRepo.create({
-      name:       dto.name,
+      name:         dto.name,
+      is_soldadura: dto.is_soldadura ?? false,
       field,
-      employees:  [],
-      created_by: currentUser,
+      employees:    [],
+      created_by:   currentUser,
     });
 
     return this.crewRepo.save(crew);

@@ -27,6 +27,9 @@ export class Crew {
   })
   employees!: Employee[];
 
+  @Column({ default: false })
+  is_soldadura!: boolean;
+
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'created_by' })
   created_by!: User;
