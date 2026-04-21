@@ -30,13 +30,13 @@ export class LogbookService {
       where: { id: dto.crew_id },
       relations: ['field'],
     });
-    if (!crew) throw new NotFoundException('Crew not found');
+    if (!crew) throw new NotFoundException('Cuadrilla no encontrada');
 
     const exists = await this.logRepo.findOne({
       where: { crew: { id: dto.crew_id }, week_number: dto.week_number, year: dto.year },
     });
     if (exists)
-      throw new ConflictException(`Week ${dto.week_number} of ${dto.year} already exists for this crew`);
+      throw new ConflictException(`Semana ${dto.week_number} del ${dto.year} ya existe para esta cuadrilla`);
 
     const log = this.logRepo.create({
       crew,
@@ -72,7 +72,7 @@ export class LogbookService {
       where: { id },
       relations: ['crew', 'crew.field', 'activities', 'created_by'],
     });
-    if (!log) throw new NotFoundException('Weekly log not found');
+    if (!log) throw new NotFoundException('Semana no encontrada');
     return log;
   }
 
@@ -109,7 +109,7 @@ export class LogbookService {
       where: { id: activityId },
       relations: ['weekly_log', 'weekly_log.crew', 'weekly_log.crew.field'],
     });
-    if (!activity) throw new NotFoundException('Activity not found');
+    if (!activity) throw new NotFoundException('Actividad no encontrada');
 
     if (dto.description !== undefined) activity.description = dto.description;
     if (dto.start_date  !== undefined) activity.start_date  = dto.start_date as any;
@@ -135,8 +135,8 @@ export class LogbookService {
 
   async removeActivity(activityId: string) {
     const activity = await this.activityRepo.findOne({ where: { id: activityId } });
-    if (!activity) throw new NotFoundException('Activity not found');
+    if (!activity) throw new NotFoundException('Actividad no encontrada');
     await this.activityRepo.remove(activity);
-    return { message: 'Activity deleted' };
+    return { message: 'Actividad eliminada' };
   }
 }
