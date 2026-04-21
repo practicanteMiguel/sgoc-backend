@@ -1,0 +1,80 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { VaultImage } from './entities/vault-image.entity';
+import { WeeklyLog } from '../logbook/entities/weekly-log.entity';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+
+@Injectable()
+export class VaultService {
+  constructor(
+    @InjectRepository(VaultImage) private vaultRepo: Repository<VaultImage>,
+    @InjectRepository(WeeklyLog)  private logRepo: Repository<WeeklyLog>,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
+
+  async getByToken(token: string) {
+    const log = await this.logRepo.findOne({
+      where: { vault_token: token },
+      relations: ['crew', 'crew.field'],
+    });
+    if (!log) throw new NotFoundException('Enlace no válido');
+
+    const images = await this.vaultRepo.find({
+      where: { weekly_log: { id: log.id } },
+      order: { uploaded_at: 'ASC' },
+    });
+
+    return {
+      weekly_log_id: log.id,
+      crew:  log.crew.name,
+      field: log.crew.field.name,
+      week:  log.week_number,
+      year:  log.year,
+      images,
+    };
+  }
+
+  async uploadImages(token: string, files: Express.Multer.File[]) {
+    const log = await this.logRepo.findOne({
+      where: { vault_token: token },
+      relations: ['crew', 'crew.field'],
+    });
+    if (!log) throw new NotFoundException('Enlace no válido');
+
+    const folder = this.cloudinary.buildFolder(
+      log.crew.field.name,
+      log.year,
+      log.crew.name,
+      log.week_number,
+    );
+
+    const results: VaultImage[] = [];
+
+    for (const file of files) {
+      // Idempotencia: misma imagen en el mismo log no se duplica
+      const existing = await this.vaultRepo.findOne({
+        where: { weekly_log: { id: log.id }, original_name: file.originalname },
+      });
+      if (existing) { results.push(existing); continue; }
+
+      const { url, public_id } = await this.cloudinary.uploadFull(file, folder);
+      const image = this.vaultRepo.create({
+        weekly_log:    log,
+        url,
+        public_id,
+        original_name: file.originalname,
+      });
+      results.push(await this.vaultRepo.save(image));
+    }
+
+    return results;
+  }
+
+  async getByLogId(logId: string) {
+    return this.vaultRepo.find({
+      where: { weekly_log: { id: logId } },
+      order: { uploaded_at: 'ASC' },
+    });
+  }
+}

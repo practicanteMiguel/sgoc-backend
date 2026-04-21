@@ -1,8 +1,9 @@
 import {
   Entity, PrimaryGeneratedColumn, Column,
   CreateDateColumn, UpdateDateColumn,
-  ManyToOne, OneToMany, JoinColumn,
+  ManyToOne, OneToMany, JoinColumn, BeforeInsert,
 } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { Crew } from '../../crews/entities/crew.entity';
 import { LogActivity } from './log-activity.entity';
 import { User } from '../../../../users/entities/user.entity';
@@ -21,6 +22,14 @@ export class WeeklyLog {
 
   @Column({ type: 'int' })
   year!: number;
+
+  @Column({ unique: true })
+  vault_token!: string;
+
+  @BeforeInsert()
+  generateVaultToken() {
+    if (!this.vault_token) this.vault_token = randomUUID();
+  }
 
   @OneToMany(() => LogActivity, (a) => a.weekly_log, { cascade: true })
   activities!: LogActivity[];

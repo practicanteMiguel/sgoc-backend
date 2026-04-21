@@ -1,4 +1,4 @@
-import { IsString, IsDateString, IsOptional } from 'class-validator';
+import { IsString, IsDateString, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateActivityDto {
   @IsString()
@@ -13,4 +13,16 @@ export class CreateActivityDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsUUID()
+  @IsOptional()
+  vault_before?: string;
+
+  @IsUUID()
+  @IsOptional()
+  vault_during?: string;
+
+  @IsUUID()
+  @IsOptional()
+  vault_after?: string;
 }

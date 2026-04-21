@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { WeeklyLog } from './entities/weekly-log.entity';
 import { LogActivity } from './entities/log-activity.entity';
 import { Crew } from '../crews/entities/crew.entity';
+import { VaultImage } from '../vault/entities/vault-image.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { User } from '../../../users/entities/user.entity';
 import { CreateWeeklyLogDto } from './dto/create-weekly-log.dto';
@@ -19,9 +20,10 @@ type UploadedFiles = {
 @Injectable()
 export class LogbookService {
   constructor(
-    @InjectRepository(WeeklyLog)  private logRepo: Repository<WeeklyLog>,
+    @InjectRepository(WeeklyLog)   private logRepo: Repository<WeeklyLog>,
     @InjectRepository(LogActivity) private activityRepo: Repository<LogActivity>,
     @InjectRepository(Crew)        private crewRepo: Repository<Crew>,
+    @InjectRepository(VaultImage)  private vaultRepo: Repository<VaultImage>,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -94,12 +96,12 @@ export class LogbookService {
       notes:       dto.notes,
     });
 
-    if (files.image_before?.[0])
-      activity.image_before = await this.cloudinary.upload(files.image_before[0], folder);
-    if (files.image_during?.[0])
-      activity.image_during = await this.cloudinary.upload(files.image_during[0], folder);
-    if (files.image_after?.[0])
-      activity.image_after = await this.cloudinary.upload(files.image_after[0], folder);
+    const ib = await this.resolveImage(dto.vault_before, files.image_before?.[0], folder);
+    const id = await this.resolveImage(dto.vault_during, files.image_during?.[0], folder);
+    const ia = await this.resolveImage(dto.vault_after,  files.image_after?.[0],  folder);
+    if (ib) activity.image_before = ib;
+    if (id) activity.image_during = id;
+    if (ia) activity.image_after  = ia;
 
     return this.activityRepo.save(activity);
   }
@@ -123,14 +125,38 @@ export class LogbookService {
       activity.weekly_log.week_number,
     );
 
-    if (files.image_before?.[0])
-      activity.image_before = await this.cloudinary.upload(files.image_before[0], folder);
-    if (files.image_during?.[0])
-      activity.image_during = await this.cloudinary.upload(files.image_during[0], folder);
-    if (files.image_after?.[0])
-      activity.image_after = await this.cloudinary.upload(files.image_after[0], folder);
+    const ib = await this.resolveImage(dto.vault_before, files.image_before?.[0], folder);
+    const id = await this.resolveImage(dto.vault_during, files.image_during?.[0], folder);
+    const ia = await this.resolveImage(dto.vault_after,  files.image_after?.[0],  folder);
+    if (ib) activity.image_before = ib;
+    if (id) activity.image_during = id;
+    if (ia) activity.image_after  = ia;
 
     return this.activityRepo.save(activity);
+  }
+
+  async getVault(logId: string) {
+    await this.findOne(logId);
+    return this.vaultRepo.find({
+      where: { weekly_log: { id: logId } },
+      order: { uploaded_at: 'ASC' },
+    });
+  }
+
+  private async resolveImage(
+    vaultId: string | undefined,
+    file: Express.Multer.File | undefined,
+    folder: string,
+  ): Promise<string | undefined> {
+    if (vaultId) {
+      const img = await this.vaultRepo.findOne({ where: { id: vaultId } });
+      if (!img) throw new NotFoundException(`Imagen de bóveda ${vaultId} no encontrada`);
+      img.is_assigned = true;
+      await this.vaultRepo.save(img);
+      return img.url;
+    }
+    if (file) return this.cloudinary.upload(file, folder);
+    return undefined;
   }
 
   async removeActivity(activityId: string) {

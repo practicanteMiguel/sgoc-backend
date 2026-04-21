@@ -46,6 +46,12 @@ export class LogbookController {
     return this.service.findOne(id);
   }
 
+  @Get(':id/vault')
+  @ApiOperation({ summary: 'Listar imágenes de la bóveda de una bitácora' })
+  getVault(@Param('id') id: string) {
+    return this.service.getVault(id);
+  }
+
   @Post(':id/activities')
   @Roles('supervisor', 'admin', 'coordinator')
   @ApiConsumes('multipart/form-data')

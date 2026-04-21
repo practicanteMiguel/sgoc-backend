@@ -6,9 +6,13 @@ import { Crew } from '../crews/entities/crew.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { LogbookService } from './logbook.service';
 import { LogbookController } from './logbook.controller';
+import { VaultModule } from '../vault/vault.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([WeeklyLog, LogActivity, Crew])],
+  imports: [
+    TypeOrmModule.forFeature([WeeklyLog, LogActivity, Crew]),
+    VaultModule,
+  ],
   controllers: [LogbookController],
   providers: [LogbookService, CloudinaryService],
   exports: [TypeOrmModule],
