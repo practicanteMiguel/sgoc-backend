@@ -3,13 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VaultImage } from './entities/vault-image.entity';
 import { WeeklyLog } from '../logbook/entities/weekly-log.entity';
+import { TechnicalReport } from '../reports/entities/technical-report.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class VaultService {
   constructor(
-    @InjectRepository(VaultImage) private vaultRepo: Repository<VaultImage>,
-    @InjectRepository(WeeklyLog)  private logRepo: Repository<WeeklyLog>,
+    @InjectRepository(VaultImage)     private vaultRepo: Repository<VaultImage>,
+    @InjectRepository(WeeklyLog)      private logRepo: Repository<WeeklyLog>,
+    @InjectRepository(TechnicalReport) private reportRepo: Repository<TechnicalReport>,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -20,17 +22,21 @@ export class VaultService {
     });
     if (!log) throw new NotFoundException('Enlace no válido');
 
-    const images = await this.vaultRepo.find({
-      where: { weekly_log: { id: log.id } },
-      order: { uploaded_at: 'ASC' },
-    });
+    const [images, report] = await Promise.all([
+      this.vaultRepo.find({
+        where: { weekly_log: { id: log.id } },
+        order: { uploaded_at: 'ASC' },
+      }),
+      this.reportRepo.findOne({ where: { weekly_log: { id: log.id } } }),
+    ]);
 
     return {
       weekly_log_id: log.id,
-      crew:  log.crew.name,
-      field: log.crew.field.name,
-      week:  log.week_number,
-      year:  log.year,
+      crew:      log.crew.name,
+      field:     log.crew.field.name,
+      week:      log.week_number,
+      year:      log.year,
+      is_closed: !!report,
       images,
     };
   }
