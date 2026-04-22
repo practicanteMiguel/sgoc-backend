@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { createHash } from 'crypto';
 import { VaultImage } from './entities/vault-image.entity';
 import { WeeklyLog } from '../logbook/entities/weekly-log.entity';
 import { TechnicalReport } from '../reports/entities/technical-report.entity';
@@ -65,9 +66,10 @@ export class VaultService {
     const results: VaultImage[] = [];
 
     for (const file of files) {
-      // Idempotencia: misma imagen en el mismo log no se duplica
+      const file_hash = createHash('sha256').update(file.buffer).digest('hex');
+
       const existing = await this.vaultRepo.findOne({
-        where: { weekly_log: { id: log.id }, original_name: file.originalname },
+        where: { weekly_log: { id: log.id }, file_hash },
       });
       if (existing) { results.push(existing); continue; }
 
@@ -77,6 +79,7 @@ export class VaultService {
         url,
         public_id,
         original_name: file.originalname,
+        file_hash,
       });
       results.push(await this.vaultRepo.save(image));
     }

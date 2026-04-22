@@ -22,6 +22,9 @@ export class VaultImage {
   @Column()
   original_name!: string;
 
+  @Column({ nullable: true })
+  file_hash!: string;
+
   @Column({ default: false })
   is_assigned!: boolean;
 
