@@ -18,7 +18,7 @@ export class VaultService {
   async getByToken(token: string) {
     const log = await this.logRepo.findOne({
       where: { vault_token: token },
-      relations: ['crew', 'crew.field'],
+      relations: ['crew', 'crew.field', 'activities'],
     });
     if (!log) throw new NotFoundException('Enlace no válido');
 
@@ -30,13 +30,20 @@ export class VaultService {
       this.reportRepo.findOne({ where: { weekly_log: { id: log.id } } }),
     ]);
 
+    const used_image_urls = [
+      ...log.activities.map((a) => a.image_before),
+      ...log.activities.map((a) => a.image_during),
+      ...log.activities.map((a) => a.image_after),
+    ].filter(Boolean) as string[];
+
     return {
-      weekly_log_id: log.id,
-      crew:      log.crew.name,
-      field:     log.crew.field.name,
-      week:      log.week_number,
-      year:      log.year,
-      is_closed: !!report,
+      weekly_log_id:   log.id,
+      crew:            log.crew.name,
+      field:           log.crew.field.name,
+      week:            log.week_number,
+      year:            log.year,
+      is_closed:       !!report,
+      used_image_urls,
       images,
     };
   }
