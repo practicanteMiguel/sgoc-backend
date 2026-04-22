@@ -68,10 +68,16 @@ export class VaultService {
     for (const file of files) {
       const file_hash = createHash('sha256').update(file.buffer).digest('hex');
 
-      const existing = await this.vaultRepo.findOne({
-        where: { weekly_log: { id: log.id }, file_hash },
+      const sameName = await this.vaultRepo.findOne({
+        where: { weekly_log: { id: log.id }, original_name: file.originalname },
       });
-      if (existing) { results.push(existing); continue; }
+
+      // Mismo nombre y mismo contenido: duplicado de galeria, saltar
+      if (sameName && sameName.file_hash === file_hash) {
+        results.push(sameName);
+        continue;
+      }
+      // Mismo nombre pero contenido diferente: foto nueva de camara con nombre generico, subir
 
       const { url, public_id } = await this.cloudinary.uploadFull(file, folder);
       const image = this.vaultRepo.create({
