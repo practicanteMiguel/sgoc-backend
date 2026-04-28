@@ -56,7 +56,7 @@ export class VaultService {
     });
     if (!log) throw new NotFoundException('Enlace no válido');
 
-    const folder = this.cloudinary.buildFolder(
+    const folder = this.cloudinary.buildActivityFolder(
       log.crew.field.name,
       log.year,
       log.crew.name,

@@ -31,8 +31,13 @@ export class CloudinaryService {
     });
   }
 
-  buildFolder(fieldName: string, year: number, crewName: string, week: number): string {
+  buildActivityFolder(fieldName: string, year: number, crewName: string, week: number): string {
     const s = (v: string) => v.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^\w]/g, '');
-    return `${s(fieldName)}/${year}/${s(crewName)}/week_${week}`;
+    return `${s(fieldName)}/${year}/actividades/${s(crewName)}/week_${week}`;
+  }
+
+  buildViaFolder(fieldName: string, year: number, month: number): string {
+    const s = (v: string) => v.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^\w]/g, '');
+    return `${s(fieldName)}/${year}/vias/month_${month}`;
   }
 }

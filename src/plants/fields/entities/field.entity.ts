@@ -17,6 +17,12 @@ export class Field {
   @Column()
   location!: string;
 
+  @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
+  center_lat!: number | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
+  center_lng!: number | null;
+
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'supervisor_id' })
   supervisor!: User;

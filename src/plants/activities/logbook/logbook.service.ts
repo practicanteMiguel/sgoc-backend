@@ -81,7 +81,7 @@ export class LogbookService {
   async addActivity(logId: string, dto: CreateActivityDto, files: UploadedFiles) {
     const log = await this.findOne(logId);
 
-    const folder = this.cloudinary.buildFolder(
+    const folder = this.cloudinary.buildActivityFolder(
       log.crew.field.name,
       log.year,
       log.crew.name,
@@ -118,7 +118,7 @@ export class LogbookService {
     if (dto.end_date    !== undefined) activity.end_date    = dto.end_date as any;
     if (dto.notes       !== undefined) activity.notes       = dto.notes!;
 
-    const folder = this.cloudinary.buildFolder(
+    const folder = this.cloudinary.buildActivityFolder(
       activity.weekly_log.crew.field.name,
       activity.weekly_log.year,
       activity.weekly_log.crew.name,
