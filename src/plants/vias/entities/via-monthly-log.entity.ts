@@ -7,7 +7,7 @@ import {
 import { randomUUID } from 'crypto';
 import { Field } from '../../fields/entities/field.entity';
 import { User } from '../../../users/entities/user.entity';
-import { ViaCapture } from './via-capture.entity';
+import { ViaCaptureGroup } from './via-capture-group.entity';
 
 @Entity('via_monthly_logs')
 @Unique(['field', 'month', 'year'])
@@ -33,8 +33,8 @@ export class ViaMonthlyLog {
     if (!this.vault_token) this.vault_token = randomUUID();
   }
 
-  @OneToMany(() => ViaCapture, (c) => c.monthly_log)
-  captures!: ViaCapture[];
+  @OneToMany(() => ViaCaptureGroup, (g) => g.monthly_log)
+  capture_groups!: ViaCaptureGroup[];
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'created_by' })

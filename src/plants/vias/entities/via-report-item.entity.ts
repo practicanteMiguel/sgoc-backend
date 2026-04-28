@@ -3,7 +3,7 @@ import {
   ManyToOne, JoinColumn, CreateDateColumn,
 } from 'typeorm';
 import { ViaReport } from './via-report.entity';
-import { ViaCapture } from './via-capture.entity';
+import { ViaCaptureGroup } from './via-capture-group.entity';
 
 export type ViaState = 'bueno' | 'regular' | 'malo' | 'critico';
 
@@ -16,9 +16,9 @@ export class ViaReportItem {
   @JoinColumn({ name: 'report_id' })
   report!: ViaReport;
 
-  @ManyToOne(() => ViaCapture, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'capture_id' })
-  capture!: ViaCapture | null;
+  @ManyToOne(() => ViaCaptureGroup, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'capture_group_id' })
+  capture_group!: ViaCaptureGroup | null;
 
   @Column()
   via_name!: string;

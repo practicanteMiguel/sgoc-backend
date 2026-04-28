@@ -4,23 +4,23 @@ import { Repository } from 'typeorm';
 import { ViaReport } from '../entities/via-report.entity';
 import { ViaReportItem } from '../entities/via-report-item.entity';
 import { ViaMonthlyLog } from '../entities/via-monthly-log.entity';
-import { ViaCapture } from '../entities/via-capture.entity';
+import { ViaCaptureGroup } from '../entities/via-capture-group.entity';
 import { User } from '../../../users/entities/user.entity';
 import { CreateReportDto } from '../dto/create-report.dto';
 
 @Injectable()
 export class ViaReportsService {
   constructor(
-    @InjectRepository(ViaReport)     private reportRepo: Repository<ViaReport>,
-    @InjectRepository(ViaReportItem) private itemRepo: Repository<ViaReportItem>,
-    @InjectRepository(ViaMonthlyLog) private logRepo: Repository<ViaMonthlyLog>,
-    @InjectRepository(ViaCapture)    private captureRepo: Repository<ViaCapture>,
+    @InjectRepository(ViaReport)       private reportRepo: Repository<ViaReport>,
+    @InjectRepository(ViaReportItem)   private itemRepo: Repository<ViaReportItem>,
+    @InjectRepository(ViaMonthlyLog)   private logRepo: Repository<ViaMonthlyLog>,
+    @InjectRepository(ViaCaptureGroup) private groupRepo: Repository<ViaCaptureGroup>,
   ) {}
 
   async create(dto: CreateReportDto, currentUser: User) {
     const log = await this.logRepo.findOne({
       where: { id: dto.monthly_log_id },
-      relations: ['field', 'captures'],
+      relations: ['field', 'capture_groups'],
     });
     if (!log) throw new NotFoundException('Registro mensual no encontrado');
 
@@ -31,10 +31,10 @@ export class ViaReportsService {
       if (existing) throw new ConflictException('Ya existe un informe mensual para este registro');
     }
 
-    const captureIds = log.captures.map((c) => c.id);
+    const groupIds = log.capture_groups.map((g) => g.id);
     for (const item of dto.items) {
-      if (item.capture_id && !captureIds.includes(item.capture_id)) {
-        throw new BadRequestException(`La captura ${item.capture_id} no pertenece a este registro mensual`);
+      if (item.capture_group_id && !groupIds.includes(item.capture_group_id)) {
+        throw new BadRequestException(`El grupo de capturas ${item.capture_group_id} no pertenece a este registro mensual`);
       }
     }
 
@@ -48,16 +48,19 @@ export class ViaReportsService {
 
     const items = await Promise.all(
       dto.items.map(async (itemDto) => {
-        const capture = itemDto.capture_id
-          ? await this.captureRepo.findOne({ where: { id: itemDto.capture_id } })
+        const captureGroup = itemDto.capture_group_id
+          ? await this.groupRepo.findOne({
+              where: { id: itemDto.capture_group_id },
+              relations: ['images'],
+            })
           : null;
         return this.itemRepo.save(
           this.itemRepo.create({
-            report:       saved,
-            capture:      capture ?? null,
-            via_name:     itemDto.via_name,
-            state:        itemDto.state as any,
-            observations: itemDto.observations ?? null,
+            report:        saved,
+            capture_group: captureGroup ?? null,
+            via_name:      itemDto.via_name,
+            state:         itemDto.state as any,
+            observations:  itemDto.observations ?? null,
           }),
         );
       }),
@@ -91,7 +94,7 @@ export class ViaReportsService {
       where: { id },
       relations: [
         'monthly_log', 'monthly_log.field',
-        'items', 'items.capture',
+        'items', 'items.capture_group', 'items.capture_group.images',
         'created_by',
       ],
     });
@@ -108,15 +111,15 @@ export class ViaReportsService {
 
   private formatWithMap(r: ViaReport) {
     const mapPoints = (r.items ?? [])
-      .filter((i) => i.capture?.lat != null && i.capture?.lng != null)
+      .filter((i) => i.capture_group?.lat != null && i.capture_group?.lng != null)
       .map((i) => ({
         item_id:      i.id,
         via_name:     i.via_name,
         state:        i.state,
-        lat:          Number(i.capture!.lat),
-        lng:          Number(i.capture!.lng),
-        capture_url:  i.capture!.url,
-        captured_at:  i.capture!.captured_at,
+        lat:          Number(i.capture_group!.lat),
+        lng:          Number(i.capture_group!.lng),
+        images:       (i.capture_group!.images ?? []).map((img) => img.url),
+        captured_at:  i.capture_group!.captured_at,
       }));
 
     return {
@@ -131,18 +134,22 @@ export class ViaReportsService {
         field: (r.monthly_log as any).field,
       },
       items: (r.items ?? []).map((i) => ({
-        id:           i.id,
-        via_name:     i.via_name,
-        state:        i.state,
-        observations: i.observations,
-        capture:      i.capture
+        id:            i.id,
+        via_name:      i.via_name,
+        state:         i.state,
+        observations:  i.observations,
+        capture_group: i.capture_group
           ? {
-              id:          i.capture.id,
-              url:         i.capture.url,
-              lat:         i.capture.lat != null ? Number(i.capture.lat) : null,
-              lng:         i.capture.lng != null ? Number(i.capture.lng) : null,
-              comment:     i.capture.comment,
-              captured_at: i.capture.captured_at,
+              id:         i.capture_group.id,
+              lat:        i.capture_group.lat != null ? Number(i.capture_group.lat) : null,
+              lng:        i.capture_group.lng != null ? Number(i.capture_group.lng) : null,
+              via_name:   i.capture_group.via_name,
+              comment:    i.capture_group.comment,
+              images:     (i.capture_group.images ?? []).map((img) => ({
+                id:  img.id,
+                url: img.url,
+              })),
+              captured_at: i.capture_group.captured_at,
             }
           : null,
       })),

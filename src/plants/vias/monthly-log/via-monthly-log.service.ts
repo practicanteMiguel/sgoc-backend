@@ -47,7 +47,7 @@ export class ViaMonthlyLogService {
   async findOne(id: string) {
     const log = await this.logRepo.findOne({
       where: { id },
-      relations: ['field', 'captures', 'captures.taken_by', 'created_by'],
+      relations: ['field', 'capture_groups', 'capture_groups.images', 'capture_groups.taken_by', 'created_by'],
     });
     if (!log) throw new NotFoundException('Registro mensual no encontrado');
     return log;

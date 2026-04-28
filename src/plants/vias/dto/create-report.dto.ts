@@ -7,7 +7,7 @@ import { Type } from 'class-transformer';
 export class CreateReportItemDto {
   @IsUUID()
   @IsOptional()
-  capture_id?: string;
+  capture_group_id?: string;
 
   @IsString()
   via_name!: string;
