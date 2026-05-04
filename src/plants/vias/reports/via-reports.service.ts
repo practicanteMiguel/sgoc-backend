@@ -70,55 +70,38 @@ export class ViaReportsService {
   }
 
   async findAll(page = 1, limit = 20, fieldId?: string, type?: string, year?: number, month?: number) {
-    const qb = this.reportRepo
+    const idQb = this.reportRepo
       .createQueryBuilder('r')
-      .leftJoinAndSelect('r.monthly_log', 'log')
-      .leftJoinAndSelect('log.field', 'field')
-      .leftJoin('r.created_by', 'cb')
-      .addSelect(['cb.id', 'cb.first_name', 'cb.last_name', 'cb.email', 'cb.position'])
-      .loadRelationCountAndMap('r.items_count', 'r.items')
+      .select(['r.id', 'r.created_at'])
+      .leftJoin('r.monthly_log', 'log')
+      .leftJoin('log.field', 'field')
       .where('r.deleted_at IS NULL')
       .orderBy('r.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
-    if (fieldId) qb.andWhere('field.id = :fieldId', { fieldId });
-    if (type)    qb.andWhere('r.type = :type', { type });
-    if (year)    qb.andWhere('log.year = :year', { year });
-    if (month)   qb.andWhere('log.month = :month', { month });
+    if (fieldId) idQb.andWhere('field.id = :fieldId', { fieldId });
+    if (type)    idQb.andWhere('r.type = :type', { type });
+    if (year)    idQb.andWhere('log.year = :year', { year });
+    if (month)   idQb.andWhere('log.month = :month', { month });
 
-    const [data, total] = await qb.getManyAndCount();
+    const [idRows, total] = await idQb.getManyAndCount();
+    const ids = idRows.map((r) => r.id);
 
-    const reportIds = data.map((r) => r.id);
-    const pointsMap = new Map<string, { via_name: string | null; lat: number; lng: number }[]>();
+    if (!ids.length) return { data: [], total, page, limit, pages: Math.ceil(total / limit) };
 
-    if (reportIds.length) {
-      const rows = await this.reportRepo
-        .createQueryBuilder('r')
-        .select('r.id', 'report_id')
-        .addSelect('cg.via_name', 'via_name')
-        .addSelect('cg.lat',      'lat')
-        .addSelect('cg.lng',      'lng')
-        .innerJoin('r.items', 'ri')
-        .innerJoin('ri.capture_group', 'cg')
-        .where('r.id IN (:...reportIds)', { reportIds })
-        .andWhere('cg.lat IS NOT NULL')
-        .andWhere('cg.lng IS NOT NULL')
-        .getRawMany<{ report_id: string; via_name: string | null; lat: string; lng: string }>();
+    const reports = await this.reportRepo
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.monthly_log', 'log')
+      .leftJoinAndSelect('log.field', 'field')
+      .leftJoinAndSelect('r.items', 'items')
+      .leftJoinAndSelect('items.capture_group', 'cg')
+      .leftJoinAndSelect('cg.images', 'images')
+      .where('r.id IN (:...ids)', { ids })
+      .orderBy('r.created_at', 'DESC')
+      .getMany();
 
-      for (const row of rows) {
-        const pts = pointsMap.get(row.report_id) ?? [];
-        pts.push({ via_name: row.via_name, lat: Number(row.lat), lng: Number(row.lng) });
-        pointsMap.set(row.report_id, pts);
-      }
-    }
-
-    const enriched = data.map((r) => ({
-      ...r,
-      map_points: pointsMap.get(r.id) ?? [],
-    }));
-
-    return { data: enriched, total, page, limit, pages: Math.ceil(total / limit) };
+    return { data: reports.map((r) => this.formatWithMap(r)), total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string) {
