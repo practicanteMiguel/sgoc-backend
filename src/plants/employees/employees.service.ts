@@ -9,6 +9,10 @@ import { User } from '../../users/entities/user.entity';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
+const pickCreator = (u: any) => u
+  ? { id: u.id, first_name: u.first_name, last_name: u.last_name, email: u.email, position: u.position }
+  : null;
+
 @Injectable()
 export class EmployeesService {
   constructor(
@@ -31,13 +35,18 @@ export class EmployeesService {
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
-  async findOne(id: string) {
+  private async getEntity(id: string): Promise<Employee> {
     const emp = await this.employeeRepo.findOne({
       where: { id },
       relations: ['field', 'created_by'],
     });
     if (!emp) throw new NotFoundException('Empleado no encontrado');
     return emp;
+  }
+
+  async findOne(id: string) {
+    const emp = await this.getEntity(id);
+    return { ...emp, created_by: pickCreator(emp.created_by) };
   }
 
   async create(dto: CreateEmployeeDto, currentUser: User) {
@@ -67,19 +76,19 @@ export class EmployeesService {
   }
 
   async update(id: string, dto: UpdateEmployeeDto) {
-    const emp = await this.findOne(id);
+    const emp = await this.getEntity(id);
     Object.assign(emp, dto);
     return this.employeeRepo.save(emp);
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    await this.getEntity(id);
     await this.employeeRepo.softDelete(id);
     return { message: 'Empleado eliminado correctamente' };
   }
 
   async assignToField(employeeId: string, fieldId: string) {
-    const emp   = await this.findOne(employeeId);
+    const emp   = await this.getEntity(employeeId);
     const field = await this.fieldRepo.findOne({ where: { id: fieldId } });
     if (!field) throw new NotFoundException('Planta no encontrada');
 
@@ -92,7 +101,7 @@ export class EmployeesService {
   }
 
   async changeField(employeeId: string, newFieldId: string) {
-    const emp      = await this.findOne(employeeId);
+    const emp      = await this.getEntity(employeeId);
     const newField = await this.fieldRepo.findOne({ where: { id: newFieldId } });
     if (!newField) throw new NotFoundException('Planta no encontrada');
 
@@ -108,7 +117,7 @@ export class EmployeesService {
   }
 
   async removeFromField(employeeId: string) {
-    const emp = await this.findOne(employeeId);
+    const emp = await this.getEntity(employeeId);
     if (!emp.field)
       throw new BadRequestException('El empleado no está asignado a ninguna planta');
 

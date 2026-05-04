@@ -8,6 +8,10 @@ import { User } from '../../users/entities/user.entity';
 import { CreateFieldDto } from './dto/create-field.dto';
 import { UpdateFieldDto } from './dto/update-field.dto';
 
+const pickCreator = (u: any) => u
+  ? { id: u.id, first_name: u.first_name, last_name: u.last_name, email: u.email, position: u.position }
+  : null;
+
 @Injectable()
 export class FieldsService {
   constructor(
@@ -26,13 +30,18 @@ export class FieldsService {
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
-  async findOne(id: string) {
+  private async getEntity(id: string): Promise<Field> {
     const field = await this.fieldRepo.findOne({
       where: { id },
       relations: ['supervisor', 'employees', 'created_by'],
     });
     if (!field) throw new NotFoundException('Planta no encontrada');
     return field;
+  }
+
+  async findOne(id: string) {
+    const field = await this.getEntity(id);
+    return { ...field, created_by: pickCreator(field.created_by) };
   }
 
   async create(dto: CreateFieldDto, currentUser: User) {
@@ -45,19 +54,19 @@ export class FieldsService {
   }
 
   async update(id: string, dto: UpdateFieldDto) {
-    const field = await this.findOne(id);
+    const field = await this.getEntity(id);
     Object.assign(field, dto);
     return this.fieldRepo.save(field);
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    await this.getEntity(id);
     await this.fieldRepo.softDelete(id);
     return { message: 'Planta eliminada correctamente' };
   }
 
   async assignSupervisor(fieldId: string, userId: string) {
-    const field = await this.findOne(fieldId);
+    const field = await this.getEntity(fieldId);
     const user  = await this.userRepo.findOne({
       where: { id: userId },
       relations: ['user_roles', 'user_roles.role'],
@@ -68,7 +77,6 @@ export class FieldsService {
     if (!isSupervisor)
       throw new BadRequestException('El usuario no tiene rol de supervisor');
 
-    // Si el usuario ya estaba asignado a otra planta, quitar esa relacion
     if (user.field_id && user.field_id !== fieldId) {
       const prevField = await this.fieldRepo.findOne({ where: { id: user.field_id } });
       if (prevField) {
@@ -80,7 +88,6 @@ export class FieldsService {
     field.supervisor = user;
     await this.fieldRepo.save(field);
 
-    // Actualizar el campo field_id del usuario
     await this.userRepo.update(userId, { field_id: fieldId });
 
     return { message: `Supervisor asignado a la planta ${field.name}` };

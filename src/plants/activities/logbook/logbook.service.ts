@@ -69,7 +69,7 @@ export class LogbookService {
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
-  async findOne(id: string) {
+  private async getEntity(id: string) {
     const log = await this.logRepo.findOne({
       where: { id },
       relations: ['crew', 'crew.field', 'activities', 'created_by'],
@@ -78,8 +78,17 @@ export class LogbookService {
     return log;
   }
 
+  async findOne(id: string) {
+    const log = await this.getEntity(id);
+    const cb  = log.created_by as any;
+    return {
+      ...log,
+      created_by: cb ? { id: cb.id, first_name: cb.first_name, last_name: cb.last_name, email: cb.email, position: cb.position } : null,
+    };
+  }
+
   async addActivity(logId: string, dto: CreateActivityDto, files: UploadedFiles) {
-    const log = await this.findOne(logId);
+    const log = await this.getEntity(logId);
 
     const folder = this.cloudinary.buildActivityFolder(
       log.crew.field.name,

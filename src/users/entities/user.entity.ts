@@ -15,8 +15,7 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
-  @Column()
-    
+  @Column({ select: false })
   password_hash!: string;
 
   @Column()
@@ -48,8 +47,7 @@ export class User {
   @Column({ default: true })
   is_first_login!: boolean;
 
-  // token UUID temporal para verificar el correo — se borra al verificar
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   email_verification_token!: string;
 
   // última vez que el usuario cambió su contraseña

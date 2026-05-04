@@ -6,6 +6,8 @@ import { Field } from '../../fields/entities/field.entity';
 import { User } from '../../../users/entities/user.entity';
 import { CreateMonthlyLogDto } from '../dto/create-monthly-log.dto';
 
+const CREATOR_COLS = ['cb.id', 'cb.first_name', 'cb.last_name', 'cb.email', 'cb.position'];
+
 @Injectable()
 export class ViaMonthlyLogService {
   constructor(
@@ -30,7 +32,8 @@ export class ViaMonthlyLogService {
     const qb = this.logRepo
       .createQueryBuilder('l')
       .leftJoinAndSelect('l.field', 'field')
-      .leftJoinAndSelect('l.created_by', 'created_by')
+      .leftJoin('l.created_by', 'cb')
+      .addSelect(CREATOR_COLS)
       .orderBy('l.year', 'DESC')
       .addOrderBy('l.month', 'DESC')
       .skip((page - 1) * limit)
@@ -45,10 +48,16 @@ export class ViaMonthlyLogService {
   }
 
   async findOne(id: string) {
-    const log = await this.logRepo.findOne({
-      where: { id },
-      relations: ['field', 'capture_groups', 'capture_groups.images', 'capture_groups.taken_by', 'created_by'],
-    });
+    const log = await this.logRepo
+      .createQueryBuilder('l')
+      .leftJoinAndSelect('l.field', 'field')
+      .leftJoinAndSelect('l.capture_groups', 'cg')
+      .leftJoinAndSelect('cg.images', 'images')
+      .leftJoinAndSelect('cg.taken_by', 'taken_by')
+      .leftJoin('l.created_by', 'cb')
+      .addSelect(CREATOR_COLS)
+      .where('l.id = :id', { id })
+      .getOne();
     if (!log) throw new NotFoundException('Registro mensual no encontrado');
     return log;
   }

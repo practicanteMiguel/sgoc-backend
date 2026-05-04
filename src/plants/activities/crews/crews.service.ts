@@ -9,6 +9,10 @@ import { Employee } from '../../employees/entities/employee.entity';
 import { User } from '../../../users/entities/user.entity';
 import { CreateCrewDto } from './dto/create-crew.dto';
 
+const pickCreator = (u: any) => u
+  ? { id: u.id, first_name: u.first_name, last_name: u.last_name, email: u.email, position: u.position }
+  : null;
+
 @Injectable()
 export class CrewsService {
   constructor(
@@ -51,7 +55,7 @@ export class CrewsService {
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
-  async findOne(id: string) {
+  private async getEntity(id: string): Promise<Crew> {
     const crew = await this.crewRepo.findOne({
       where: { id },
       relations: ['field', 'employees', 'created_by'],
@@ -60,20 +64,25 @@ export class CrewsService {
     return crew;
   }
 
+  async findOne(id: string) {
+    const crew = await this.getEntity(id);
+    return { ...crew, created_by: pickCreator(crew.created_by) };
+  }
+
   async update(id: string, dto: CreateCrewDto) {
-    const crew = await this.findOne(id);
+    const crew = await this.getEntity(id);
     crew.name = dto.name;
     return this.crewRepo.save(crew);
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    await this.getEntity(id);
     await this.crewRepo.softDelete(id);
     return { message: 'Cuadrilla eliminada correctamente' };
   }
 
   async addEmployee(crewId: string, employeeId: string) {
-    const crew = await this.findOne(crewId);
+    const crew = await this.getEntity(crewId);
 
     const employee = await this.employeeRepo.findOne({
       where: { id: employeeId },
@@ -92,7 +101,7 @@ export class CrewsService {
   }
 
   async removeEmployee(crewId: string, employeeId: string) {
-    const crew = await this.findOne(crewId);
+    const crew = await this.getEntity(crewId);
 
     const index = crew.employees.findIndex((e) => e.id === employeeId);
     if (index === -1)

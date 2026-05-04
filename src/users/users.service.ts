@@ -77,10 +77,13 @@ export class UsersService {
   }
 
   async findByEmail(email: string) {
-    return this.userRepo.findOne({
-      where: { email },
-      relations: ['user_roles', 'user_roles.role'],
-    });
+    return this.userRepo
+      .createQueryBuilder('u')
+      .addSelect('u.password_hash')
+      .leftJoinAndSelect('u.user_roles', 'ur')
+      .leftJoinAndSelect('ur.role', 'role')
+      .where('u.email = :email', { email })
+      .getOne();
   }
 
   // ── Crear usuario — solo admin ─────────────────────────────────
@@ -151,7 +154,11 @@ export class UsersService {
 
   // ── Cambio de contraseña propio ────────────────────────────────
   async changePassword(userId: string, dto: ChangePasswordDto) {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo
+      .createQueryBuilder('u')
+      .addSelect('u.password_hash')
+      .where('u.id = :id', { id: userId })
+      .getOne();
     if (!user) throw new NotFoundException('Usuario no encontrado');
 
     // Si no es primer login exigimos la contraseña actual
