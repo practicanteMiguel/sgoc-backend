@@ -88,7 +88,37 @@ export class ViaReportsService {
     if (month)   qb.andWhere('log.month = :month', { month });
 
     const [data, total] = await qb.getManyAndCount();
-    return { data, total, page, limit, pages: Math.ceil(total / limit) };
+
+    const reportIds = data.map((r) => r.id);
+    const pointsMap = new Map<string, { via_name: string | null; lat: number; lng: number }[]>();
+
+    if (reportIds.length) {
+      const rows = await this.reportRepo
+        .createQueryBuilder('r')
+        .select('r.id', 'report_id')
+        .addSelect('cg.via_name', 'via_name')
+        .addSelect('cg.lat',      'lat')
+        .addSelect('cg.lng',      'lng')
+        .innerJoin('r.items', 'ri')
+        .innerJoin('ri.capture_group', 'cg')
+        .where('r.id IN (:...reportIds)', { reportIds })
+        .andWhere('cg.lat IS NOT NULL')
+        .andWhere('cg.lng IS NOT NULL')
+        .getRawMany<{ report_id: string; via_name: string | null; lat: string; lng: string }>();
+
+      for (const row of rows) {
+        const pts = pointsMap.get(row.report_id) ?? [];
+        pts.push({ via_name: row.via_name, lat: Number(row.lat), lng: Number(row.lng) });
+        pointsMap.set(row.report_id, pts);
+      }
+    }
+
+    const enriched = data.map((r) => ({
+      ...r,
+      map_points: pointsMap.get(r.id) ?? [],
+    }));
+
+    return { data: enriched, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string) {
