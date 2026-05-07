@@ -40,7 +40,7 @@ export class FieldsController {
   }
 
   @Patch(':id')
-  @Roles('admin', 'coordinator', 'module_manager')
+  @Roles('admin', 'coordinator', 'module_manager', 'supervisor')
   @ApiOperation({ summary: 'Actualizar datos de la planta' })
   update(@Param('id') id: string, @Body() dto: UpdateFieldDto) {
     return this.fieldsService.update(id, dto);
