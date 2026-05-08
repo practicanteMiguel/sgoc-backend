@@ -98,6 +98,16 @@ export class VoiceLogsService {
     return log;
   }
 
+  async updateTranscription(
+    id: string,
+    userId: string,
+    transcription: string,
+  ): Promise<VoiceLog> {
+    const log = await this.findOne(id, userId);
+    log.transcription = transcription;
+    return this.repo.save(log) as Promise<VoiceLog>;
+  }
+
   async remove(id: string, userId: string): Promise<void> {
     const log = await this.findOne(id, userId);
     await this.repo.softDelete(log.id);

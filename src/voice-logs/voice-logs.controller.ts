@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   UploadedFile,
@@ -22,6 +23,7 @@ import { User } from '../users/entities/user.entity';
 import { VoiceLogsService } from './voice-logs.service';
 import { GenerateReportDto } from './dto/generate-report.dto';
 import { QueryVoiceLogsDto } from './dto/query-voice-logs.dto';
+import { UpdateTranscriptionDto } from './dto/update-transcription.dto';
 
 const ALLOWED_AUDIO_TYPES = [
   'audio/mpeg',
@@ -84,6 +86,15 @@ export class VoiceLogsController {
     @CurrentUser() user: User,
   ) {
     return this.service.findOne(id, user.id);
+  }
+
+  @Patch(':id/transcription')
+  updateTranscription(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTranscriptionDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.service.updateTranscription(id, user.id, dto.transcription);
   }
 
   @Delete(':id')
