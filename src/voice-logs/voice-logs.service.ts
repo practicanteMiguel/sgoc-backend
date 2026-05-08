@@ -106,7 +106,11 @@ export class VoiceLogsService {
   async generateReport(
     dto: GenerateReportDto,
     userId: string,
-  ): Promise<{ title: string; report: string; sources: number }> {
+  ): Promise<{
+    title: string;
+    days: { dayNumber: number; date: string; entries: string[] }[];
+    sources: number;
+  }> {
     const logs = await this.repo.find({
       where: { id: In(dto.ids), user_id: userId },
       order: { created_at: 'ASC' },
@@ -116,22 +120,33 @@ export class VoiceLogsService {
       throw new NotFoundException('No se encontraron registros para el informe');
     }
 
-    const title = dto.title ?? 'Informe de actividades';
-    const context = logs
-      .map(
-        (l, i) =>
-          `[${i + 1}] ${l.created_at.toISOString().split('T')[0]}: ${l.transcription}`,
-      )
+    const grouped = new Map<string, string[]>();
+    for (const log of logs) {
+      const date = log.created_at.toISOString().split('T')[0];
+      if (!grouped.has(date)) grouped.set(date, []);
+      grouped.get(date)!.push(log.transcription);
+    }
+
+    const sortedDates = [...grouped.keys()].sort();
+    const context = sortedDates
+      .map((date, i) => {
+        const records = grouped.get(date)!;
+        const lines = records.map((r, j) => `  Registro ${j + 1}: ${r}`).join('\n');
+        return `DIA ${i + 1} (${date}):\n${lines}`;
+      })
       .join('\n\n');
 
-    const report = await this.callMistralChat(title, context);
-    return { title, report, sources: logs.length };
+    const title = dto.title ?? 'Informe de actividades';
+    const days = await this.callMistralStructured(title, context, sortedDates, grouped);
+    return { title, days, sources: logs.length };
   }
 
-  private async callMistralChat(
+  private async callMistralStructured(
     title: string,
     context: string,
-  ): Promise<string> {
+    sortedDates: string[],
+    grouped: Map<string, string[]>,
+  ): Promise<{ dayNumber: number; date: string; entries: string[] }[]> {
     const res = await fetch(this.chatUrl, {
       method: 'POST',
       headers: {
@@ -144,13 +159,17 @@ export class VoiceLogsService {
           {
             role: 'system',
             content:
-              'Eres un asistente técnico. Redacta informes de actividad profesional en español, ' +
-              'estructurados con secciones claras (resumen, actividades realizadas, logros/avances, ' +
-              'temas recurrentes). Sé conciso y usa lenguaje técnico apropiado.',
+              'Eres un asistente tecnico. Tu tarea es tomar registros de voz de actividad diaria y ' +
+              'reescribirlos con lenguaje tecnico y profesional en espanol. ' +
+              'Devuelve UNICAMENTE un JSON valido con este formato exacto: ' +
+              '[{"dayNumber":1,"date":"YYYY-MM-DD","entries":["actividad pulida 1","actividad pulida 2"]},...]. ' +
+              'Cada elemento de "entries" es un punto de actividad independiente y pulido. ' +
+              'Si un dia tiene un solo registro largo, subdividelo en multiples entradas. ' +
+              'No incluyas texto, markdown ni explicaciones fuera del JSON.',
           },
           {
             role: 'user',
-            content: `Genera un informe técnico titulado "${title}" a partir de los siguientes registros de actividad diaria:\n\n${context}`,
+            content: `Titulo del informe: "${title}"\n\nRegistros por dia:\n\n${context}`,
           },
         ],
       }),
@@ -164,6 +183,20 @@ export class VoiceLogsService {
     const data = (await res.json()) as {
       choices: { message: { content: string } }[];
     };
-    return data.choices[0].message.content;
+
+    const raw = data.choices[0].message.content
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim();
+
+    try {
+      return JSON.parse(raw) as { dayNumber: number; date: string; entries: string[] }[];
+    } catch {
+      return sortedDates.map((date, i) => ({
+        dayNumber: i + 1,
+        date,
+        entries: grouped.get(date) ?? [],
+      }));
+    }
   }
 }
