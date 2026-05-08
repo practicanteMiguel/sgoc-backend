@@ -14,6 +14,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { PlantsModule } from './plants/plants.module';
 import { ComplianceModule } from './compliance/compliance.module';
 import { VoiceLogsModule } from './voice-logs/voice-logs.module';
+import { ConsumablesModule } from './consumables/consumables.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { VoiceLogsModule } from './voice-logs/voice-logs.module';
     PlantsModule,
     ComplianceModule,
     VoiceLogsModule,
+    ConsumablesModule,
   ],
   providers: [
     // Registro global — corre en TODOS los controllers automáticamente
