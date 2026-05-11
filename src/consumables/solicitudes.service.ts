@@ -172,6 +172,20 @@ export class SolicitudesService {
     return this.findOne(id);
   }
 
+  async findMiSolicitud(userId: string, mes: number, anio: number) {
+    const field = await this.fieldRepo.findOne({
+      where: { supervisor: { id: userId } },
+    });
+    if (!field) throw new NotFoundException('No tienes una planta asignada como supervisor');
+
+    const s = await this.solicitudRepo.findOne({
+      where: { field_id: field.id, mes, anio },
+    });
+    if (!s) throw new NotFoundException('No hay solicitud para este periodo');
+
+    return this.findOne(s.id);
+  }
+
   async generarRqs(dto: GenerarRqsDto) {
     const s = await this.solicitudRepo.findOne({
       where: { id: dto.solicitud_id },

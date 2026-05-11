@@ -1,7 +1,9 @@
 import {
-  Controller, Get, Post, Patch, Param, Body, Query, ParseIntPipe,
+  Controller, Get, Post, Patch, Param, Body, Query, ParseIntPipe, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SolicitudesService } from './solicitudes.service';
 import { CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto } from './dto/create-solicitud.dto';
 
@@ -31,6 +33,19 @@ export class SolicitudesController {
     @Query('anio', ParseIntPipe) anio: number,
   ) {
     return this.service.findAll(mes, anio);
+  }
+
+  @Get('mi-solicitud')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Retorna la solicitud del periodo para la planta del supervisor autenticado. 404 si no existe.' })
+  @ApiQuery({ name: 'mes', type: Number, example: 5 })
+  @ApiQuery({ name: 'anio', type: Number, example: 2026 })
+  findMiSolicitud(
+    @CurrentUser('id') userId: string,
+    @Query('mes', ParseIntPipe) mes: number,
+    @Query('anio', ParseIntPipe) anio: number,
+  ) {
+    return this.service.findMiSolicitud(userId, mes, anio);
   }
 
   @Get(':id')
