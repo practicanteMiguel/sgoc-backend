@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Insumo } from './entities/insumo.entity';
+import { InsumoHistorial } from './entities/insumo-historial.entity';
 import { Requisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
 import { Field } from '../plants/fields/entities/field.entity';
@@ -14,7 +15,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Insumo, Requisicion, RequisicionItem, Field, ModuloEntity, UserModuleAccess]),
+    TypeOrmModule.forFeature([Insumo, InsumoHistorial, Requisicion, RequisicionItem, Field, ModuloEntity, UserModuleAccess]),
     NotificationsModule,
   ],
   controllers: [InsumosController, RequisicionesController],

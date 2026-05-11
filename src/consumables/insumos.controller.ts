@@ -1,5 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { InsumosService } from './insumos.service';
@@ -49,6 +50,17 @@ export class InsumosController {
   @ApiOperation({ summary: 'Eliminar insumo permanentemente' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
+  }
+
+  @Get('cambios')
+  @ApiOperation({ summary: 'Retorna insumos que tuvieron cambios en el mes indicado con valores anterior y nuevo' })
+  @ApiQuery({ name: 'mes', type: Number, example: 5 })
+  @ApiQuery({ name: 'anio', type: Number, example: 2026 })
+  getCambios(
+    @Query('mes', ParseIntPipe) mes: number,
+    @Query('anio', ParseIntPipe) anio: number,
+  ) {
+    return this.service.getCambios(mes, anio);
   }
 
   @Post('cerrar-mes')

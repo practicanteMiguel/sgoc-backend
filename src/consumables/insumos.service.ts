@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
+import { InsumoHistorial } from './entities/insumo-historial.entity';
 import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto } from './dto/create-insumo.dto';
 import { AppModule as ModuloEntity } from '../modules/entities/module.entity';
 import { UserModuleAccess } from '../modules/entities/user-module.entity';
@@ -23,6 +24,7 @@ const MESES = [
 export class InsumosService {
   constructor(
     @InjectRepository(Insumo) private repo: Repository<Insumo>,
+    @InjectRepository(InsumoHistorial) private historialRepo: Repository<InsumoHistorial>,
     @InjectRepository(ModuloEntity) private moduloRepo: Repository<ModuloEntity>,
     @InjectRepository(UserModuleAccess) private accessRepo: Repository<UserModuleAccess>,
     private notificationsService: NotificationsService,
@@ -86,8 +88,64 @@ export class InsumosService {
 
   async update(id: string, dto: UpdateInsumoDto) {
     const insumo = await this.findOne(id);
+
+    const camposAuditables: (keyof UpdateInsumoDto)[] = [
+      'valor_unitario', 'proveedor_ordinario', 'proveedor_extraordinario', 'activo',
+    ];
+    const registros: Partial<InsumoHistorial>[] = [];
+
+    for (const campo of camposAuditables) {
+      if (!(campo in dto)) continue;
+      const anterior = insumo[campo] ?? null;
+      const nuevo = dto[campo] ?? null;
+      if (String(anterior) === String(nuevo)) continue;
+      registros.push({
+        insumo_id: insumo.id,
+        campo,
+        anterior: anterior !== null ? String(anterior) : null,
+        nuevo: nuevo !== null ? String(nuevo) : null,
+      });
+    }
+
     Object.assign(insumo, dto);
-    return this.repo.save(insumo);
+    const saved = await this.repo.save(insumo);
+
+    if (registros.length) await this.historialRepo.save(registros);
+
+    return saved;
+  }
+
+  async getCambios(mes: number, anio: number) {
+    const inicio = new Date(anio, mes - 1, 1);
+    const fin = new Date(anio, mes, 1);
+
+    const registros = await this.historialRepo.find({
+      where: { fecha: Between(inicio, fin) },
+      relations: ['insumo'],
+      order: { fecha: 'ASC' },
+    });
+
+    if (!registros.length) return [];
+
+    const porInsumo = new Map<string, typeof registros>();
+    for (const r of registros) {
+      if (!porInsumo.has(r.insumo_id)) porInsumo.set(r.insumo_id, []);
+      porInsumo.get(r.insumo_id)!.push(r);
+    }
+
+    return Array.from(porInsumo.entries()).map(([, items]) => {
+      const insumo = items[0].insumo;
+      return {
+        id: insumo.id,
+        codigo: insumo.codigo,
+        descripcion: insumo.descripcion,
+        cambios: items.map(r => ({
+          campo: r.campo,
+          anterior: r.anterior !== null ? parseFloat(r.anterior) || r.anterior : null,
+          nuevo: r.nuevo !== null ? parseFloat(r.nuevo) || r.nuevo : null,
+        })),
+      };
+    });
   }
 
   async cerrarMes(dto: CerrarMesDto) {
