@@ -34,6 +34,12 @@ export class InsumosController {
     return this.service.findAll(+page, +limit, categoria, search, activoFlag);
   }
 
+  @Get('periodos-cerrados')
+  @ApiOperation({ summary: 'Retorna todos los meses ya cerrados' })
+  getPeriodosCerrados() {
+    return this.service.getPeriodosCerrados();
+  }
+
   @Get('cambios')
   @ApiOperation({ summary: 'Retorna insumos que tuvieron cambios en el mes indicado con valores anterior y nuevo' })
   @ApiQuery({ name: 'mes', type: Number, example: 5 })

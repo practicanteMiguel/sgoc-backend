@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
 import { InsumoHistorial } from './entities/insumo-historial.entity';
+import { PeriodoCerrado } from './entities/periodo-cerrado.entity';
 import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto } from './dto/create-insumo.dto';
 import { AppModule as ModuloEntity } from '../modules/entities/module.entity';
 import { UserModuleAccess } from '../modules/entities/user-module.entity';
@@ -25,6 +26,7 @@ export class InsumosService {
   constructor(
     @InjectRepository(Insumo) private repo: Repository<Insumo>,
     @InjectRepository(InsumoHistorial) private historialRepo: Repository<InsumoHistorial>,
+    @InjectRepository(PeriodoCerrado) private periodoRepo: Repository<PeriodoCerrado>,
     @InjectRepository(ModuloEntity) private moduloRepo: Repository<ModuloEntity>,
     @InjectRepository(UserModuleAccess) private accessRepo: Repository<UserModuleAccess>,
     private notificationsService: NotificationsService,
@@ -148,7 +150,22 @@ export class InsumosService {
     });
   }
 
+  async getPeriodosCerrados() {
+    return this.periodoRepo.find({ order: { anio: 'DESC', mes: 'DESC' } });
+  }
+
   async cerrarMes(dto: CerrarMesDto) {
+    const yaExiste = await this.periodoRepo.findOne({
+      where: { mes: dto.mes, anio: dto.anio },
+    });
+    if (yaExiste) {
+      throw new ConflictException(
+        `El mes ${MESES[dto.mes - 1]} ${dto.anio} ya fue cerrado el ${yaExiste.cerrado_en.toISOString().slice(0, 10)}`,
+      );
+    }
+
+    await this.periodoRepo.save(this.periodoRepo.create({ mes: dto.mes, anio: dto.anio }));
+
     const modulo = await this.moduloRepo.findOne({ where: { slug: 'consumables' } });
     if (!modulo) return { notificados: 0, usuarios: [] };
 
