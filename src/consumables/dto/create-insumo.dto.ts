@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsNumber, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsNumber, IsBoolean, IsInt, Min, Max } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CategoriaInsumo } from '../entities/insumo.entity';
 
@@ -26,6 +26,16 @@ export class CreateInsumoDto {
   @ApiPropertyOptional()
   @IsOptional() @IsString()
   proveedor_extraordinario?: string;
+}
+
+export class CerrarMesDto {
+  @ApiProperty({ example: 5 })
+  @IsInt() @Min(1) @Max(12)
+  mes!: number;
+
+  @ApiProperty({ example: 2026 })
+  @IsInt() @Min(2024)
+  anio!: number;
 }
 
 export class UpdateInsumoDto {

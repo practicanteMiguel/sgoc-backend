@@ -48,6 +48,20 @@ export class ItemSolicitadoDto {
   solicitado!: number;
 }
 
+export class CreateRequisicionMasivoDto {
+  @ApiProperty()
+  @IsInt()
+  numero_rq!: number;
+
+  @ApiPropertyOptional({ default: 45 })
+  @IsOptional() @IsInt()
+  lote?: number;
+
+  @ApiProperty({ enum: CategoriaInsumo })
+  @IsEnum(CategoriaInsumo)
+  categoria!: CategoriaInsumo;
+}
+
 export class LlenadoSupervisorDto {
   @ApiProperty()
   @IsString() @IsNotEmpty()

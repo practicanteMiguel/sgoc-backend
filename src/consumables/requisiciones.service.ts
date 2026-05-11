@@ -1,14 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
+import { Field } from '../plants/fields/entities/field.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
 import {
   CreateRequisicionDto,
   UpdateRequisicionDto,
   LlenadoSupervisorDto,
+  CreateRequisicionMasivoDto,
 } from './dto/create-requisicion.dto';
+
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
 
 @Injectable()
 export class RequisicionesService {
@@ -16,6 +25,8 @@ export class RequisicionesService {
     @InjectRepository(Requisicion) private rqRepo: Repository<Requisicion>,
     @InjectRepository(RequisicionItem) private itemRepo: Repository<RequisicionItem>,
     @InjectRepository(Insumo) private insumoRepo: Repository<Insumo>,
+    @InjectRepository(Field) private fieldRepo: Repository<Field>,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(dto: CreateRequisicionDto) {
@@ -38,6 +49,63 @@ export class RequisicionesService {
     await this.itemRepo.save(items);
 
     return this.findOne(saved.id);
+  }
+
+  async crearMasivo(dto: CreateRequisicionMasivoDto) {
+    const fields = await this.fieldRepo.find({
+      where: { supervisor: Not(IsNull()) },
+      relations: ['supervisor'],
+      withDeleted: false,
+    });
+
+    const insumos = await this.insumoRepo.find({
+      where: { categoria: dto.categoria, activo: true },
+      order: { codigo: 'ASC' },
+    });
+
+    const mes = new Date().getMonth();
+    const anio = new Date().getFullYear();
+    const nombreMes = MESES[mes];
+    const resultado: Array<{
+      planta: string;
+      supervisor: string;
+      rq_id: string;
+      numero_rq: number;
+    }> = [];
+
+    for (const field of fields) {
+      const rq = await this.rqRepo.save(
+        this.rqRepo.create({
+          numero_rq: dto.numero_rq,
+          lote: dto.lote ?? 45,
+          categoria: dto.categoria,
+          lugar: field.name,
+          field_id: field.id,
+        }),
+      );
+
+      const items = insumos.map(insumo =>
+        this.itemRepo.create({ requisicion_id: rq.id, insumo_id: insumo.id, solicitado: null }),
+      );
+      await this.itemRepo.save(items);
+
+      await this.notificationsService.createSystem({
+        user_id: field.supervisor.id,
+        title: 'Lista de consumibles disponible',
+        message: `La lista de consumibles (${dto.categoria}) de ${nombreMes} ${anio} ya está disponible para llenarse.`,
+        priority: NotificationPriority.HIGH,
+        data: { rq_id: rq.id, categoria: dto.categoria },
+      });
+
+      resultado.push({
+        planta: field.name,
+        supervisor: `${field.supervisor.first_name} ${field.supervisor.last_name}`,
+        rq_id: rq.id,
+        numero_rq: rq.numero_rq,
+      });
+    }
+
+    return resultado;
   }
 
   async findAll() {
@@ -79,6 +147,7 @@ export class RequisicionesService {
       lote: rq.lote,
       categoria: rq.categoria,
       lugar: rq.lugar,
+      field_id: rq.field_id,
       fecha: rq.fecha,
       nombre_solicitante: rq.nombre_solicitante,
       numero_contrato: rq.numero_contrato,

@@ -7,6 +7,7 @@ import {
   CreateRequisicionDto,
   UpdateRequisicionDto,
   LlenadoSupervisorDto,
+  CreateRequisicionMasivoDto,
 } from './dto/create-requisicion.dto';
 
 @ApiTags('Requisiciones')
@@ -15,9 +16,15 @@ export class RequisicionesController {
   constructor(private readonly service: RequisicionesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear RQ. Genera automaticamente un item por cada insumo activo de la categoria' })
+  @ApiOperation({ summary: 'Crear RQ individual. Genera automaticamente un item por cada insumo activo de la categoria' })
   create(@Body() dto: CreateRequisicionDto) {
     return this.service.create(dto);
+  }
+
+  @Post('masivo')
+  @ApiOperation({ summary: 'Encargado genera RQs para todas las plantas con supervisor. Notifica a cada supervisor automaticamente' })
+  crearMasivo(@Body() dto: CreateRequisicionMasivoDto) {
+    return this.service.crearMasivo(dto);
   }
 
   @Get()

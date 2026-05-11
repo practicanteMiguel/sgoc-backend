@@ -39,6 +39,9 @@ export class Requisicion {
   @Column({ type: 'enum', enum: EstadoRequisicion, default: EstadoRequisicion.ABIERTA })
   estado!: EstadoRequisicion;
 
+  @Column({ type: 'uuid', nullable: true })
+  field_id!: string | null;
+
   @OneToMany(() => RequisicionItem, item => item.requisicion, { cascade: true })
   items!: RequisicionItem[];
 

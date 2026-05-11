@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { InsumosService } from './insumos.service';
-import { CreateInsumoDto, UpdateInsumoDto } from './dto/create-insumo.dto';
+import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto } from './dto/create-insumo.dto';
 import { CategoriaInsumo } from './entities/insumo.entity';
 
 @ApiTags('Insumos')
@@ -49,5 +49,11 @@ export class InsumosController {
   @ApiOperation({ summary: 'Eliminar insumo permanentemente' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
+  }
+
+  @Post('cerrar-mes')
+  @ApiOperation({ summary: 'Compras cierra el mes: notifica a los encargados de consumables que la lista esta lista para revisar' })
+  cerrarMes(@Body() dto: CerrarMesDto) {
+    return this.service.cerrarMes(dto);
   }
 }

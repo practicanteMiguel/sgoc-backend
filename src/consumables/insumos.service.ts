@@ -2,7 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
-import { CreateInsumoDto, UpdateInsumoDto } from './dto/create-insumo.dto';
+import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto } from './dto/create-insumo.dto';
+import { AppModule as ModuloEntity } from '../modules/entities/module.entity';
+import { UserModuleAccess } from '../modules/entities/user-module.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
 
 const PREFIJO: Record<CategoriaInsumo, string> = {
   [CategoriaInsumo.PAPELERIA]:  'PAP',
@@ -10,10 +14,18 @@ const PREFIJO: Record<CategoriaInsumo, string> = {
   [CategoriaInsumo.EPP]:        'EPP',
 };
 
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
 @Injectable()
 export class InsumosService {
   constructor(
     @InjectRepository(Insumo) private repo: Repository<Insumo>,
+    @InjectRepository(ModuloEntity) private moduloRepo: Repository<ModuloEntity>,
+    @InjectRepository(UserModuleAccess) private accessRepo: Repository<UserModuleAccess>,
+    private notificationsService: NotificationsService,
   ) {}
 
   private async generarCodigo(categoria: CategoriaInsumo): Promise<string> {
@@ -76,5 +88,31 @@ export class InsumosService {
     const insumo = await this.findOne(id);
     Object.assign(insumo, dto);
     return this.repo.save(insumo);
+  }
+
+  async cerrarMes(dto: CerrarMesDto) {
+    const modulo = await this.moduloRepo.findOne({ where: { slug: 'consumables' } });
+    if (!modulo) return { notificados: 0, usuarios: [] };
+
+    const accesos = await this.accessRepo.find({
+      where: { module: { id: modulo.id }, can_view: true },
+      relations: ['user'],
+    });
+
+    const nombreMes = MESES[dto.mes - 1];
+    const usuarios: string[] = [];
+
+    for (const acceso of accesos) {
+      if (!acceso.user || !acceso.user.is_active) continue;
+      await this.notificationsService.createSystem({
+        user_id: acceso.user.id,
+        title: 'Lista de consumibles lista',
+        message: `La lista de consumibles de ${nombreMes} ${dto.anio} ya está lista para revisar y generar el mes.`,
+        priority: NotificationPriority.HIGH,
+      });
+      usuarios.push(`${acceso.user.first_name} ${acceso.user.last_name}`);
+    }
+
+    return { notificados: usuarios.length, usuarios };
   }
 }
