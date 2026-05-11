@@ -205,6 +205,7 @@ export class UsersService {
 
   async update(id: string, dto: UpdateUserDto) {
     const user = await this.findById(id);
+    if (dto.field_id === '') dto.field_id = null;
     await this.userRepo.save({ ...user, ...dto });
     return this.findById(id);
   }
