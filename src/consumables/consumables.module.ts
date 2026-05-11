@@ -6,6 +6,8 @@ import { PeriodoCerrado } from './entities/periodo-cerrado.entity';
 import { InsumosBorrador } from './entities/insumo-borrador.entity';
 import { Requisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
+import { Solicitud } from './entities/solicitud.entity';
+import { SolicitudItem } from './entities/solicitud-item.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { AppModule as ModuloEntity } from '../modules/entities/module.entity';
 import { UserModuleAccess } from '../modules/entities/user-module.entity';
@@ -13,15 +15,17 @@ import { InsumosService } from './insumos.service';
 import { InsumosController } from './insumos.controller';
 import { RequisicionesService } from './requisiciones.service';
 import { RequisicionesController } from './requisiciones.controller';
+import { SolicitudesService } from './solicitudes.service';
+import { SolicitudesController } from './solicitudes.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Insumo, InsumoHistorial, PeriodoCerrado, InsumosBorrador, Requisicion, RequisicionItem, Field, ModuloEntity, UserModuleAccess]),
+    TypeOrmModule.forFeature([Insumo, InsumoHistorial, PeriodoCerrado, InsumosBorrador, Requisicion, RequisicionItem, Solicitud, SolicitudItem, Field, ModuloEntity, UserModuleAccess]),
     NotificationsModule,
   ],
-  controllers: [InsumosController, RequisicionesController],
-  providers: [InsumosService, RequisicionesService],
-  exports: [TypeOrmModule, InsumosService, RequisicionesService],
+  controllers: [InsumosController, RequisicionesController, SolicitudesController],
+  providers: [InsumosService, RequisicionesService, SolicitudesService],
+  exports: [TypeOrmModule, InsumosService, RequisicionesService, SolicitudesService],
 })
 export class ConsumablesModule {}
