@@ -4,7 +4,8 @@ import { Between, Repository } from 'typeorm';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
 import { InsumoHistorial } from './entities/insumo-historial.entity';
 import { PeriodoCerrado } from './entities/periodo-cerrado.entity';
-import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto } from './dto/create-insumo.dto';
+import { InsumosBorrador } from './entities/insumo-borrador.entity';
+import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto, BorradorInsumoDto } from './dto/create-insumo.dto';
 import { AppModule as ModuloEntity } from '../modules/entities/module.entity';
 import { UserModuleAccess } from '../modules/entities/user-module.entity';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -27,6 +28,7 @@ export class InsumosService {
     @InjectRepository(Insumo) private repo: Repository<Insumo>,
     @InjectRepository(InsumoHistorial) private historialRepo: Repository<InsumoHistorial>,
     @InjectRepository(PeriodoCerrado) private periodoRepo: Repository<PeriodoCerrado>,
+    @InjectRepository(InsumosBorrador) private borradorRepo: Repository<InsumosBorrador>,
     @InjectRepository(ModuloEntity) private moduloRepo: Repository<ModuloEntity>,
     @InjectRepository(UserModuleAccess) private accessRepo: Repository<UserModuleAccess>,
     private notificationsService: NotificationsService,
@@ -154,6 +156,44 @@ export class InsumosService {
     return this.periodoRepo.find({ order: { anio: 'DESC', mes: 'DESC' } });
   }
 
+  async upsertBorrador(insumoId: string, dto: BorradorInsumoDto) {
+    await this.findOne(insumoId);
+
+    let borrador = await this.borradorRepo.findOne({
+      where: { insumo_id: insumoId, mes: dto.mes, anio: dto.anio },
+    });
+
+    if (!borrador) {
+      borrador = this.borradorRepo.create({ insumo_id: insumoId, mes: dto.mes, anio: dto.anio });
+    }
+
+    if ('valor_unitario' in dto)         borrador.valor_unitario         = dto.valor_unitario         ?? null;
+    if ('proveedor_ordinario' in dto)    borrador.proveedor_ordinario    = dto.proveedor_ordinario    ?? null;
+    if ('proveedor_extraordinario' in dto) borrador.proveedor_extraordinario = dto.proveedor_extraordinario ?? null;
+    if ('activo' in dto)                 borrador.activo                 = dto.activo                 ?? null;
+
+    return this.borradorRepo.save(borrador);
+  }
+
+  async getBorradores(mes: number, anio: number) {
+    const borradores = await this.borradorRepo.find({
+      where: { mes, anio },
+      relations: ['insumo'],
+      order: { updated_at: 'DESC' },
+    });
+
+    return borradores.map(b => ({
+      insumo_id:               b.insumo_id,
+      codigo:                  b.insumo.codigo,
+      descripcion:             b.insumo.descripcion,
+      valor_unitario:          b.valor_unitario,
+      proveedor_ordinario:     b.proveedor_ordinario,
+      proveedor_extraordinario: b.proveedor_extraordinario,
+      activo:                  b.activo,
+      updated_at:              b.updated_at,
+    }));
+  }
+
   async cerrarMes(dto: CerrarMesDto) {
     const yaExiste = await this.periodoRepo.findOne({
       where: { mes: dto.mes, anio: dto.anio },
@@ -164,10 +204,44 @@ export class InsumosService {
       );
     }
 
+    // Aplicar borradores al catalogo real
+    const borradores = await this.borradorRepo.find({
+      where: { mes: dto.mes, anio: dto.anio },
+      relations: ['insumo'],
+    });
+
+    const camposAuditables = [
+      'valor_unitario', 'proveedor_ordinario', 'proveedor_extraordinario', 'activo',
+    ] as const;
+
+    for (const b of borradores) {
+      const insumo = b.insumo;
+      const registros: Partial<InsumoHistorial>[] = [];
+
+      for (const campo of camposAuditables) {
+        if (b[campo] === null) continue;
+        const anterior = insumo[campo] ?? null;
+        const nuevo = b[campo];
+        if (String(anterior) === String(nuevo)) continue;
+        registros.push({
+          insumo_id: insumo.id,
+          campo,
+          anterior: anterior !== null ? String(anterior) : null,
+          nuevo: nuevo !== null ? String(nuevo) : null,
+        });
+        (insumo as unknown as Record<string, unknown>)[campo] = nuevo;
+      }
+
+      await this.repo.save(insumo);
+      if (registros.length) await this.historialRepo.save(registros);
+    }
+
+    if (borradores.length) await this.borradorRepo.remove(borradores);
+
     await this.periodoRepo.save(this.periodoRepo.create({ mes: dto.mes, anio: dto.anio }));
 
     const modulo = await this.moduloRepo.findOne({ where: { slug: 'consumables' } });
-    if (!modulo) return { notificados: 0, usuarios: [] };
+    if (!modulo) return { notificados: 0, usuarios: [], borradores_aplicados: borradores.length };
 
     const accesos = await this.accessRepo.find({
       where: { module: { id: modulo.id }, can_view: true },
@@ -188,6 +262,6 @@ export class InsumosService {
       usuarios.push(`${acceso.user.first_name} ${acceso.user.last_name}`);
     }
 
-    return { notificados: usuarios.length, usuarios };
+    return { notificados: usuarios.length, usuarios, borradores_aplicados: borradores.length };
   }
 }

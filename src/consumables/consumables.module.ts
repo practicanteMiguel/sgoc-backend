@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Insumo } from './entities/insumo.entity';
 import { InsumoHistorial } from './entities/insumo-historial.entity';
 import { PeriodoCerrado } from './entities/periodo-cerrado.entity';
+import { InsumosBorrador } from './entities/insumo-borrador.entity';
 import { Requisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
 import { Field } from '../plants/fields/entities/field.entity';
@@ -16,7 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Insumo, InsumoHistorial, PeriodoCerrado, Requisicion, RequisicionItem, Field, ModuloEntity, UserModuleAccess]),
+    TypeOrmModule.forFeature([Insumo, InsumoHistorial, PeriodoCerrado, InsumosBorrador, Requisicion, RequisicionItem, Field, ModuloEntity, UserModuleAccess]),
     NotificationsModule,
   ],
   controllers: [InsumosController, RequisicionesController],

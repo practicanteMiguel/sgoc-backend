@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { InsumosService } from './insumos.service';
-import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto } from './dto/create-insumo.dto';
+import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto, BorradorInsumoDto } from './dto/create-insumo.dto';
 import { CategoriaInsumo } from './entities/insumo.entity';
 
 @ApiTags('Insumos')
@@ -51,14 +51,31 @@ export class InsumosController {
     return this.service.getCambios(mes, anio);
   }
 
+  @Get('borradores')
+  @ApiOperation({ summary: 'Borradores pendientes de un periodo. Incluye datos del insumo para mostrar en pantalla' })
+  @ApiQuery({ name: 'mes', type: Number, example: 5 })
+  @ApiQuery({ name: 'anio', type: Number, example: 2026 })
+  getBorradores(
+    @Query('mes', ParseIntPipe) mes: number,
+    @Query('anio', ParseIntPipe) anio: number,
+  ) {
+    return this.service.getBorradores(mes, anio);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener insumo por id' })
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
+  @Patch(':id/borrador')
+  @ApiOperation({ summary: 'Upsert de borrador por (insumo, mes, anio). Solo guarda los campos enviados' })
+  upsertBorrador(@Param('id') id: string, @Body() dto: BorradorInsumoDto) {
+    return this.service.upsertBorrador(id, dto);
+  }
+
   @Patch(':id')
-  @ApiOperation({ summary: 'Actualizar valor unitario, proveedor o estado del insumo' })
+  @ApiOperation({ summary: 'Actualizar valor unitario, proveedor o estado del insumo (aplicacion directa, sin borrador)' })
   update(@Param('id') id: string, @Body() dto: UpdateInsumoDto) {
     return this.service.update(id, dto);
   }
