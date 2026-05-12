@@ -6,8 +6,12 @@ import { CategoriaInsumo } from './insumo.entity';
 import { RequisicionItem } from './requisicion-item.entity';
 
 export enum EstadoRequisicion {
-  ABIERTA    = 'ABIERTA',
-  COMPLETADA = 'COMPLETADA',
+  ABIERTA          = 'ABIERTA',
+  APROBADA         = 'APROBADA',
+  PEDIDO_REALIZADO = 'PEDIDO_REALIZADO',
+  EN_BODEGA        = 'EN_BODEGA',
+  ENTREGADO        = 'ENTREGADO',
+  COMPLETADA       = 'COMPLETADA',
 }
 
 @Entity('requisiciones')
@@ -41,6 +45,9 @@ export class Requisicion {
 
   @Column({ type: 'uuid', nullable: true })
   field_id!: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  solicitud_id!: string | null;
 
   @OneToMany(() => RequisicionItem, item => item.requisicion, { cascade: true })
   items!: RequisicionItem[];

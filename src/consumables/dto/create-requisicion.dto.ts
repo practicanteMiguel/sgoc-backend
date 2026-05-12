@@ -5,6 +5,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CategoriaInsumo } from '../entities/insumo.entity';
+import { EstadoRequisicion } from '../entities/requisicion.entity';
 
 export class CreateRequisicionDto {
   @ApiProperty()
@@ -60,6 +61,34 @@ export class CreateRequisicionMasivoDto {
   @ApiProperty({ enum: CategoriaInsumo })
   @IsEnum(CategoriaInsumo)
   categoria!: CategoriaInsumo;
+}
+
+export class UpdateEstadoDto {
+  @ApiProperty({ enum: [EstadoRequisicion.PEDIDO_REALIZADO, EstadoRequisicion.EN_BODEGA, EstadoRequisicion.ENTREGADO] })
+  @IsEnum(EstadoRequisicion)
+  estado!: EstadoRequisicion;
+}
+
+export class ItemFacturaDto {
+  @ApiProperty()
+  @IsUUID()
+  id!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsString()
+  numero_factura?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsNumber()
+  precio_real?: number;
+}
+
+export class UpdateFacturasDto {
+  @ApiProperty({ type: [ItemFacturaDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemFacturaDto)
+  items!: ItemFacturaDto[];
 }
 
 export class LlenadoSupervisorDto {

@@ -54,6 +54,12 @@ export class SolicitudesController {
     return this.service.findOne(id);
   }
 
+  @Get(':id/requisiciones')
+  @ApiOperation({ summary: 'Requisiciones generadas a partir de esta solicitud. Para trazabilidad del supervisor.' })
+  findRequisiciones(@Param('id') id: string) {
+    return this.service.findRequisicionesBySolicitud(id);
+  }
+
   @Patch(':id/llenado')
   @ApiOperation({ summary: 'Supervisor llena fecha, nombre, contrato y cantidades solicitadas' })
   llenado(@Param('id') id: string, @Body() dto: LlenadoSolicitudDto) {

@@ -8,6 +8,8 @@ import {
   UpdateRequisicionDto,
   LlenadoSupervisorDto,
   CreateRequisicionMasivoDto,
+  UpdateEstadoDto,
+  UpdateFacturasDto,
 } from './dto/create-requisicion.dto';
 
 @ApiTags('Requisiciones')
@@ -49,6 +51,18 @@ export class RequisicionesController {
   @ApiOperation({ summary: 'Supervisor llena fecha, nombre, contrato y cantidades solicitadas' })
   llenadoSupervisor(@Param('id') id: string, @Body() dto: LlenadoSupervisorDto) {
     return this.service.llenadoSupervisor(id, dto);
+  }
+
+  @Patch(':id/estado')
+  @ApiOperation({ summary: 'Compras avanza el estado de la RQ: PEDIDO_REALIZADO | EN_BODEGA | ENTREGADO' })
+  updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDto) {
+    return this.service.updateEstado(id, dto);
+  }
+
+  @Patch(':id/facturas')
+  @ApiOperation({ summary: 'Encargado registra numero de factura y precio real por item' })
+  updateFacturas(@Param('id') id: string, @Body() dto: UpdateFacturasDto) {
+    return this.service.updateFacturas(id, dto);
   }
 
   @Delete(':id')

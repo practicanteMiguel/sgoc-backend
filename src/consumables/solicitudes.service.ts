@@ -172,6 +172,22 @@ export class SolicitudesService {
     return this.findOne(id);
   }
 
+  async findRequisicionesBySolicitud(solicitudId: string) {
+    const rqs = await this.rqRepo.find({
+      where: { solicitud_id: solicitudId },
+      order: { categoria: 'ASC' },
+    });
+
+    return rqs.map(rq => ({
+      id: rq.id,
+      numero_rq: rq.numero_rq,
+      categoria: rq.categoria,
+      estado: rq.estado,
+      lugar: rq.lugar,
+      created_at: rq.created_at,
+    }));
+  }
+
   async findMiSolicitud(userId: string, mes: number, anio: number) {
     const field = await this.fieldRepo.findOne({
       where: { supervisor: { id: userId } },
@@ -208,10 +224,11 @@ export class SolicitudesService {
           categoria: asignacion.categoria,
           lugar: s.lugar,
           field_id: s.field_id,
+          solicitud_id: s.id,
           fecha: s.fecha,
           nombre_solicitante: s.nombre_solicitante,
           numero_contrato: s.numero_contrato,
-          estado: EstadoRequisicion.COMPLETADA,
+          estado: EstadoRequisicion.APROBADA,
         }),
       );
 

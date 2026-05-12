@@ -12,6 +12,8 @@ import {
   UpdateRequisicionDto,
   LlenadoSupervisorDto,
   CreateRequisicionMasivoDto,
+  UpdateEstadoDto,
+  UpdateFacturasDto,
 } from './dto/create-requisicion.dto';
 
 const MESES = [
@@ -181,6 +183,28 @@ export class RequisicionesService {
 
     for (const itemDto of dto.items) {
       await this.itemRepo.update(itemDto.id, { solicitado: itemDto.solicitado });
+    }
+
+    return this.findOne(id);
+  }
+
+  async updateEstado(id: string, dto: UpdateEstadoDto) {
+    const rq = await this.rqRepo.findOne({ where: { id } });
+    if (!rq) throw new NotFoundException('Requisicion no encontrada');
+    rq.estado = dto.estado;
+    await this.rqRepo.save(rq);
+    return { id: rq.id, estado: rq.estado };
+  }
+
+  async updateFacturas(id: string, dto: UpdateFacturasDto) {
+    const rq = await this.rqRepo.findOne({ where: { id } });
+    if (!rq) throw new NotFoundException('Requisicion no encontrada');
+
+    for (const itemDto of dto.items) {
+      await this.itemRepo.update(itemDto.id, {
+        ...(itemDto.numero_factura !== undefined && { numero_factura: itemDto.numero_factura }),
+        ...(itemDto.precio_real     !== undefined && { precio_real:     itemDto.precio_real }),
+      });
     }
 
     return this.findOne(id);
