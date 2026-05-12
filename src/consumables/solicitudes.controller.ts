@@ -60,6 +60,12 @@ export class SolicitudesController {
     return this.service.findRequisicionesBySolicitud(id);
   }
 
+  @Patch(':id/reabrir')
+  @ApiOperation({ summary: 'Encargado re-abre la solicitud: vuelve a PENDIENTE para que el supervisor pueda editarla de nuevo' })
+  reabrir(@Param('id') id: string) {
+    return this.service.reabrir(id);
+  }
+
   @Patch(':id/llenado')
   @ApiOperation({ summary: 'Supervisor llena fecha, nombre, contrato y cantidades solicitadas' })
   llenado(@Param('id') id: string, @Body() dto: LlenadoSolicitudDto) {

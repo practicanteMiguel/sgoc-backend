@@ -172,6 +172,14 @@ export class SolicitudesService {
     return this.findOne(id);
   }
 
+  async reabrir(id: string) {
+    const s = await this.solicitudRepo.findOne({ where: { id } });
+    if (!s) throw new NotFoundException('Solicitud no encontrada');
+    s.estado = EstadoSolicitud.PENDIENTE;
+    await this.solicitudRepo.save(s);
+    return { id: s.id, estado: s.estado };
+  }
+
   async findRequisicionesBySolicitud(solicitudId: string) {
     const rqs = await this.rqRepo.find({
       where: { solicitud_id: solicitudId },
