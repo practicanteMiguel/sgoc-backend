@@ -132,6 +132,8 @@ export class RequisicionesService {
       proveedor_ordinario: item.insumo.proveedor_ordinario,
       proveedor_extraordinario: item.insumo.proveedor_extraordinario,
       solicitado: item.solicitado,
+      numero_factura: item.numero_factura,
+      precio_real: item.precio_real,
       total:
         item.solicitado !== null && item.insumo.valor_unitario !== null
           ? Number(item.solicitado) * Number(item.insumo.valor_unitario)
