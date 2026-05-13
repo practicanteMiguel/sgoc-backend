@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
@@ -31,7 +31,15 @@ export class RequisicionesService {
     private notificationsService: NotificationsService,
   ) {}
 
+  private async assertNumeroUnico(numero: number) {
+    const existe = await this.rqRepo.findOne({ where: { numero_rq: numero } });
+    if (existe) {
+      throw new ConflictException(`El número de RQ ${numero} ya fue usado en otra requisición`);
+    }
+  }
+
   async create(dto: CreateRequisicionDto) {
+    await this.assertNumeroUnico(dto.numero_rq);
     const rq = this.rqRepo.create({
       numero_rq: dto.numero_rq,
       lote: dto.lote ?? 45,
@@ -54,6 +62,7 @@ export class RequisicionesService {
   }
 
   async crearMasivo(dto: CreateRequisicionMasivoDto) {
+    await this.assertNumeroUnico(dto.numero_rq);
     const fields = await this.fieldRepo.find({
       where: { supervisor: Not(IsNull()) },
       relations: ['supervisor'],

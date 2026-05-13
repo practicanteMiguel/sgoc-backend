@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { Solicitud, EstadoSolicitud } from './entities/solicitud.entity';
@@ -216,6 +216,18 @@ export class SolicitudesService {
       relations: ['items', 'items.insumo'],
     });
     if (!s) throw new NotFoundException('Solicitud no encontrada');
+
+    const numerosUsados = await Promise.all(
+      dto.asignaciones.map(a => this.rqRepo.findOne({ where: { numero_rq: a.numero_rq } })),
+    );
+    const conflictos = dto.asignaciones
+      .filter((_, i) => numerosUsados[i] !== null)
+      .map(a => a.numero_rq);
+    if (conflictos.length) {
+      throw new ConflictException(
+        `Los siguientes números de RQ ya fueron usados: ${conflictos.join(', ')}`,
+      );
+    }
 
     const resultado: Array<{ id: string; numero_rq: number; categoria: string; lugar: string }> = [];
 
