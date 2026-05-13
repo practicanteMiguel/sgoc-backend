@@ -124,6 +124,60 @@ export class RequisicionesService {
     return rqs;
   }
 
+  async informe(mes: number, anio: number) {
+    const rqs = await this.rqRepo
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.items', 'item')
+      .leftJoinAndSelect('item.insumo', 'insumo')
+      .where('EXTRACT(MONTH FROM r.created_at) = :mes', { mes })
+      .andWhere('EXTRACT(YEAR FROM r.created_at) = :anio', { anio })
+      .orderBy('r.lugar', 'ASC')
+      .addOrderBy('r.categoria', 'ASC')
+      .addOrderBy('insumo.codigo', 'ASC')
+      .getMany();
+
+    let total_estimado = 0;
+    let total_real = 0;
+    const rows: object[] = [];
+
+    for (const rq of rqs) {
+      for (const item of rq.items) {
+        const estimado =
+          item.solicitado !== null && item.insumo.valor_unitario !== null
+            ? Number(item.solicitado) * Number(item.insumo.valor_unitario)
+            : 0;
+        const real =
+          item.solicitado !== null && item.precio_real !== null
+            ? Number(item.solicitado) * Number(item.precio_real)
+            : 0;
+
+        total_estimado += estimado;
+        total_real += real;
+
+        rows.push({
+          rq_id: rq.id,
+          numero_rq: rq.numero_rq,
+          lugar: rq.lugar,
+          lote: rq.lote,
+          categoria: rq.categoria,
+          item_id: item.id,
+          insumo_id: item.insumo_id,
+          codigo: item.insumo.codigo,
+          descripcion: item.insumo.descripcion,
+          unidad: item.insumo.unidad,
+          proveedor_ordinario: item.insumo.proveedor_ordinario,
+          solicitado: item.solicitado,
+          valor_unitario: item.insumo.valor_unitario,
+          numero_factura: item.numero_factura,
+          precio_real: item.precio_real,
+          proveedor_factura: item.proveedor_factura,
+        });
+      }
+    }
+
+    return { mes, anio, total_estimado, total_real, rows };
+  }
+
   async findOne(id: string) {
     const rq = await this.rqRepo.findOne({
       where: { id },

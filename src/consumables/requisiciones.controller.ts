@@ -1,7 +1,7 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body,
+  Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { RequisicionesService } from './requisiciones.service';
 import {
   CreateRequisicionDto,
@@ -33,6 +33,17 @@ export class RequisicionesController {
   @ApiOperation({ summary: 'Listar todas las requisiciones' })
   findAll() {
     return this.service.findAll();
+  }
+
+  @Get('informe')
+  @ApiOperation({ summary: 'Informe mensual: rows planos por item con estimado vs real, totales globales' })
+  @ApiQuery({ name: 'mes', type: Number, example: 5 })
+  @ApiQuery({ name: 'anio', type: Number, example: 2026 })
+  informe(
+    @Query('mes', ParseIntPipe) mes: number,
+    @Query('anio', ParseIntPipe) anio: number,
+  ) {
+    return this.service.informe(mes, anio);
   }
 
   @Get(':id')
