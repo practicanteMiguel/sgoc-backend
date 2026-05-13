@@ -81,6 +81,10 @@ export class ItemFacturaDto {
   @ApiPropertyOptional()
   @IsOptional() @IsNumber()
   precio_real?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsString()
+  proveedor_factura?: string | null;
 }
 
 export class UpdateFacturasDto {

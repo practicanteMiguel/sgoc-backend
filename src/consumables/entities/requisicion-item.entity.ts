@@ -33,6 +33,9 @@ export class RequisicionItem {
   @Column({ type: 'numeric', precision: 14, scale: 2, nullable: true })
   precio_real!: number | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  proveedor_factura!: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 

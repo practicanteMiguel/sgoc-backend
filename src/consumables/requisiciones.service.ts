@@ -143,6 +143,7 @@ export class RequisicionesService {
       solicitado: item.solicitado,
       numero_factura: item.numero_factura,
       precio_real: item.precio_real,
+      proveedor_factura: item.proveedor_factura,
       total:
         item.solicitado !== null && item.insumo.valor_unitario !== null
           ? Number(item.solicitado) * Number(item.insumo.valor_unitario)
@@ -213,8 +214,9 @@ export class RequisicionesService {
 
     for (const itemDto of dto.items) {
       await this.itemRepo.update(itemDto.id, {
-        ...(itemDto.numero_factura !== undefined && { numero_factura: itemDto.numero_factura }),
-        ...(itemDto.precio_real     !== undefined && { precio_real:     itemDto.precio_real }),
+        ...(itemDto.numero_factura    !== undefined && { numero_factura:    itemDto.numero_factura }),
+        ...(itemDto.precio_real       !== undefined && { precio_real:       itemDto.precio_real }),
+        ...(itemDto.proveedor_factura !== undefined && { proveedor_factura: itemDto.proveedor_factura }),
       });
     }
 
