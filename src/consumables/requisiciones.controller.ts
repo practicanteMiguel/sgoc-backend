@@ -30,9 +30,14 @@ export class RequisicionesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar todas las requisiciones' })
-  findAll() {
-    return this.service.findAll();
+  @ApiOperation({ summary: 'Listar requisiciones. Con mes+anio filtra por periodo de la solicitud vinculada (o created_at si es manual)' })
+  @ApiQuery({ name: 'mes', type: Number, required: false, example: 5 })
+  @ApiQuery({ name: 'anio', type: Number, required: false, example: 2026 })
+  findAll(
+    @Query('mes') mes?: string,
+    @Query('anio') anio?: string,
+  ) {
+    return this.service.findAll(mes ? Number(mes) : undefined, anio ? Number(anio) : undefined);
   }
 
   @Get('informe')

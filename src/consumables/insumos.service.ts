@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
 import { InsumoHistorial } from './entities/insumo-historial.entity';
 import { PeriodoCerrado } from './entities/periodo-cerrado.entity';
@@ -120,11 +120,8 @@ export class InsumosService {
   }
 
   async getCambios(mes: number, anio: number) {
-    const inicio = new Date(anio, mes - 1, 1);
-    const fin = new Date(anio, mes, 1);
-
     const registros = await this.historialRepo.find({
-      where: { fecha: Between(inicio, fin) },
+      where: { periodo_mes: mes, periodo_anio: anio },
       relations: ['insumo'],
       order: { fecha: 'ASC' },
     });
@@ -228,6 +225,8 @@ export class InsumosService {
           campo,
           anterior: anterior !== null ? String(anterior) : null,
           nuevo: nuevo !== null ? String(nuevo) : null,
+          periodo_mes: dto.mes,
+          periodo_anio: dto.anio,
         });
         (insumo as unknown as Record<string, unknown>)[campo] = nuevo;
       }

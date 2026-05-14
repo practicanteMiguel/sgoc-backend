@@ -25,6 +25,12 @@ export class InsumoHistorial {
   @Column({ type: 'text', nullable: true })
   nuevo!: string | null;
 
+  @Column({ type: 'int', nullable: true })
+  periodo_mes!: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  periodo_anio!: number | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   fecha!: Date;
 }

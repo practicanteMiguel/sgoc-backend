@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
-import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
+import { Insumo } from './entities/insumo.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
@@ -119,9 +119,21 @@ export class RequisicionesService {
     return resultado;
   }
 
-  async findAll() {
-    const rqs = await this.rqRepo.find({ order: { created_at: 'DESC' } });
-    return rqs;
+  async findAll(mes?: number, anio?: number) {
+    const qb = this.rqRepo
+      .createQueryBuilder('r')
+      .orderBy('r.created_at', 'DESC');
+
+    if (mes !== undefined && anio !== undefined) {
+      qb.leftJoin('solicitudes', 's', 's.id = r.solicitud_id')
+        .where(
+          '(r.solicitud_id IS NOT NULL AND s.mes = :mes AND s.anio = :anio) OR ' +
+          '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio)',
+          { mes, anio },
+        );
+    }
+
+    return qb.getMany();
   }
 
   async informe(mes: number, anio: number) {
