@@ -133,7 +133,8 @@ export class RequisicionesService {
         );
     }
 
-    return qb.getMany();
+    const rqs = await qb.getMany();
+    return rqs.map(r => ({ ...r, mes, anio }));
   }
 
   async informe(mes: number, anio: number) {
@@ -141,8 +142,12 @@ export class RequisicionesService {
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.items', 'item')
       .leftJoinAndSelect('item.insumo', 'insumo')
-      .where('EXTRACT(MONTH FROM r.created_at) = :mes', { mes })
-      .andWhere('EXTRACT(YEAR FROM r.created_at) = :anio', { anio })
+      .leftJoin('solicitudes', 's', 's.id = r.solicitud_id')
+      .where(
+        '(r.solicitud_id IS NOT NULL AND s.mes = :mes AND s.anio = :anio) OR ' +
+        '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio)',
+        { mes, anio },
+      )
       .orderBy('r.lugar', 'ASC')
       .addOrderBy('r.categoria', 'ASC')
       .addOrderBy('insumo.codigo', 'ASC')
