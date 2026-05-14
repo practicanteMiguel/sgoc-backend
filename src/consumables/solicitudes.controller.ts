@@ -1,11 +1,11 @@
 import {
-  Controller, Get, Post, Patch, Param, Body, Query, ParseIntPipe, UseGuards,
+  Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseIntPipe, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SolicitudesService } from './solicitudes.service';
-import { CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto } from './dto/create-solicitud.dto';
+import { CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto, CrearAdicionalDto, UpdateAdicionalDto } from './dto/create-solicitud.dto';
 
 @ApiTags('Solicitudes')
 @Controller('solicitudes')
@@ -70,5 +70,27 @@ export class SolicitudesController {
   @ApiOperation({ summary: 'Supervisor llena fecha, nombre, contrato y cantidades solicitadas' })
   llenado(@Param('id') id: string, @Body() dto: LlenadoSolicitudDto) {
     return this.service.llenado(id, dto);
+  }
+
+  @Post(':id/adicionales')
+  @ApiOperation({ summary: 'Agrega un insumo adicional a la solicitud (exclusivo del mes y planta)' })
+  addAdicional(@Param('id') id: string, @Body() dto: CrearAdicionalDto) {
+    return this.service.addAdicional(id, dto);
+  }
+
+  @Patch(':id/adicionales/:adicionalId')
+  @ApiOperation({ summary: 'Edita un insumo adicional' })
+  updateAdicional(
+    @Param('id') id: string,
+    @Param('adicionalId') adicionalId: string,
+    @Body() dto: UpdateAdicionalDto,
+  ) {
+    return this.service.updateAdicional(id, adicionalId, dto);
+  }
+
+  @Delete(':id/adicionales/:adicionalId')
+  @ApiOperation({ summary: 'Elimina un insumo adicional de la solicitud' })
+  removeAdicional(@Param('id') id: string, @Param('adicionalId') adicionalId: string) {
+    return this.service.removeAdicional(id, adicionalId);
   }
 }

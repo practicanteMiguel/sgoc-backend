@@ -3,13 +3,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { Solicitud, EstadoSolicitud } from './entities/solicitud.entity';
 import { SolicitudItem } from './entities/solicitud-item.entity';
+import { SolicitudAdicional } from './entities/solicitud-adicional.entity';
 import { Insumo } from './entities/insumo.entity';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
+import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
-import { CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto } from './dto/create-solicitud.dto';
+import {
+  CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto,
+  CrearAdicionalDto, UpdateAdicionalDto,
+} from './dto/create-solicitud.dto';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -21,9 +26,11 @@ export class SolicitudesService {
   constructor(
     @InjectRepository(Solicitud) private solicitudRepo: Repository<Solicitud>,
     @InjectRepository(SolicitudItem) private itemRepo: Repository<SolicitudItem>,
+    @InjectRepository(SolicitudAdicional) private adicionalRepo: Repository<SolicitudAdicional>,
     @InjectRepository(Insumo) private insumoRepo: Repository<Insumo>,
     @InjectRepository(Requisicion) private rqRepo: Repository<Requisicion>,
     @InjectRepository(RequisicionItem) private rqItemRepo: Repository<RequisicionItem>,
+    @InjectRepository(RequisicionItemAdicional) private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
     @InjectRepository(Field) private fieldRepo: Repository<Field>,
     private notificationsService: NotificationsService,
   ) {}
@@ -100,6 +107,11 @@ export class SolicitudesService {
     });
     if (!s) throw new NotFoundException('Solicitud no encontrada');
 
+    const adicionales = await this.adicionalRepo.find({
+      where: { solicitud_id: id },
+      order: { created_at: 'ASC' },
+    });
+
     const porCategoria: Record<string, typeof s.items> = {};
     for (const item of s.items) {
       const cat = item.insumo.categoria;
@@ -107,29 +119,68 @@ export class SolicitudesService {
       porCategoria[cat].push(item);
     }
 
-    const categorias = Object.entries(porCategoria).map(([categoria, items]) => {
-      const subtotal = items.reduce((sum, item) => {
-        if (item.solicitado !== null && item.insumo.valor_unitario !== null)
-          return sum + Number(item.solicitado) * Number(item.insumo.valor_unitario);
-        return sum;
-      }, 0);
+    const adicionalesPorCategoria: Record<string, typeof adicionales> = {};
+    for (const a of adicionales) {
+      if (!adicionalesPorCategoria[a.categoria]) adicionalesPorCategoria[a.categoria] = [];
+      adicionalesPorCategoria[a.categoria].push(a);
+    }
+
+    const todasCategorias = new Set([
+      ...Object.keys(porCategoria),
+      ...Object.keys(adicionalesPorCategoria),
+    ]);
+
+    const categorias = Array.from(todasCategorias).sort().map(categoria => {
+      const templateItems = porCategoria[categoria] ?? [];
+      const adicionalItems = adicionalesPorCategoria[categoria] ?? [];
+
+      const subtotal =
+        templateItems.reduce((sum, item) => {
+          if (item.solicitado !== null && item.insumo.valor_unitario !== null)
+            return sum + Number(item.solicitado) * Number(item.insumo.valor_unitario);
+          return sum;
+        }, 0) +
+        adicionalItems.reduce((sum, a) => {
+          if (a.solicitado !== null && a.valor_unitario !== null)
+            return sum + Number(a.solicitado) * Number(a.valor_unitario);
+          return sum;
+        }, 0);
 
       return {
         categoria,
         subtotal,
-        items: items.map(item => ({
-          id: item.id,
-          insumo_id: item.insumo_id,
-          codigo: item.insumo.codigo,
-          descripcion: item.insumo.descripcion,
-          unidad: item.insumo.unidad,
-          valor_unitario: item.insumo.valor_unitario,
-          solicitado: item.solicitado,
-          total:
-            item.solicitado !== null && item.insumo.valor_unitario !== null
-              ? Number(item.solicitado) * Number(item.insumo.valor_unitario)
-              : null,
-        })),
+        items: [
+          ...templateItems.map(item => ({
+            id: item.id,
+            es_adicional: false,
+            insumo_id: item.insumo_id,
+            codigo: item.insumo.codigo,
+            descripcion: item.insumo.descripcion,
+            unidad: item.insumo.unidad,
+            valor_unitario: item.insumo.valor_unitario,
+            proveedor: null as string | null,
+            solicitado: item.solicitado,
+            total:
+              item.solicitado !== null && item.insumo.valor_unitario !== null
+                ? Number(item.solicitado) * Number(item.insumo.valor_unitario)
+                : null,
+          })),
+          ...adicionalItems.map(a => ({
+            id: a.id,
+            es_adicional: true,
+            insumo_id: null as string | null,
+            codigo: null as string | null,
+            descripcion: a.descripcion,
+            unidad: a.unidad,
+            valor_unitario: a.valor_unitario,
+            proveedor: a.proveedor,
+            solicitado: a.solicitado,
+            total:
+              a.solicitado !== null && a.valor_unitario !== null
+                ? Number(a.solicitado) * Number(a.valor_unitario)
+                : null,
+          })),
+        ],
       };
     });
 
@@ -180,6 +231,32 @@ export class SolicitudesService {
     return { id: s.id, estado: s.estado };
   }
 
+  async addAdicional(solicitudId: string, dto: CrearAdicionalDto) {
+    const s = await this.solicitudRepo.findOne({ where: { id: solicitudId } });
+    if (!s) throw new NotFoundException('Solicitud no encontrada');
+    return this.adicionalRepo.save(
+      this.adicionalRepo.create({ ...dto, solicitud_id: solicitudId }),
+    );
+  }
+
+  async updateAdicional(solicitudId: string, adicionalId: string, dto: UpdateAdicionalDto) {
+    const a = await this.adicionalRepo.findOne({
+      where: { id: adicionalId, solicitud_id: solicitudId },
+    });
+    if (!a) throw new NotFoundException('Adicional no encontrado');
+    Object.assign(a, dto);
+    return this.adicionalRepo.save(a);
+  }
+
+  async removeAdicional(solicitudId: string, adicionalId: string) {
+    const a = await this.adicionalRepo.findOne({
+      where: { id: adicionalId, solicitud_id: solicitudId },
+    });
+    if (!a) throw new NotFoundException('Adicional no encontrado');
+    await this.adicionalRepo.remove(a);
+    return { message: 'Adicional eliminado' };
+  }
+
   async findRequisicionesBySolicitud(solicitudId: string) {
     const rqs = await this.rqRepo.find({
       where: { solicitud_id: solicitudId },
@@ -217,6 +294,10 @@ export class SolicitudesService {
     });
     if (!s) throw new NotFoundException('Solicitud no encontrada');
 
+    const adicionales = await this.adicionalRepo.find({
+      where: { solicitud_id: s.id },
+    });
+
     const numerosUsados = await Promise.all(
       dto.asignaciones.map(a => this.rqRepo.findOne({ where: { numero_rq: a.numero_rq } })),
     );
@@ -235,7 +316,11 @@ export class SolicitudesService {
       const itemsCategoria = s.items.filter(
         item => item.insumo.categoria === asignacion.categoria && Number(item.solicitado) > 0,
       );
-      if (!itemsCategoria.length) continue;
+      const adicionalesCategoria = adicionales.filter(
+        a => a.categoria === asignacion.categoria && Number(a.solicitado) > 0,
+      );
+
+      if (!itemsCategoria.length && !adicionalesCategoria.length) continue;
 
       const rq = await this.rqRepo.save(
         this.rqRepo.create({
@@ -259,7 +344,20 @@ export class SolicitudesService {
           solicitado: item.solicitado,
         }),
       );
-      await this.rqItemRepo.save(rqItems);
+      if (rqItems.length) await this.rqItemRepo.save(rqItems);
+
+      const rqAdicionales = adicionalesCategoria.map(a =>
+        this.rqAdicionalRepo.create({
+          requisicion_id: rq.id,
+          categoria: a.categoria,
+          descripcion: a.descripcion,
+          unidad: a.unidad,
+          valor_unitario: a.valor_unitario,
+          proveedor: a.proveedor,
+          solicitado: a.solicitado,
+        }),
+      );
+      if (rqAdicionales.length) await this.rqAdicionalRepo.save(rqAdicionales);
 
       resultado.push({ id: rq.id, numero_rq: rq.numero_rq, categoria: rq.categoria, lugar: rq.lugar! });
     }

@@ -1,6 +1,6 @@
 import {
   IsString, IsNotEmpty, IsEnum, IsOptional,
-  IsNumber, IsInt, IsArray, ValidateNested, IsUUID,
+  IsNumber, IsInt, IsArray, ValidateNested, IsUUID, IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -85,6 +85,10 @@ export class ItemFacturaDto {
   @ApiPropertyOptional()
   @IsOptional() @IsString()
   proveedor_factura?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsBoolean()
+  es_adicional?: boolean;
 }
 
 export class UpdateFacturasDto {

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
+import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
 import { Insumo } from './entities/insumo.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -26,6 +27,7 @@ export class RequisicionesService {
   constructor(
     @InjectRepository(Requisicion) private rqRepo: Repository<Requisicion>,
     @InjectRepository(RequisicionItem) private itemRepo: Repository<RequisicionItem>,
+    @InjectRepository(RequisicionItemAdicional) private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
     @InjectRepository(Insumo) private insumoRepo: Repository<Insumo>,
     @InjectRepository(Field) private fieldRepo: Repository<Field>,
     private notificationsService: NotificationsService,
@@ -153,6 +155,14 @@ export class RequisicionesService {
       .addOrderBy('insumo.codigo', 'ASC')
       .getMany();
 
+    const rqIds = rqs.map(r => r.id);
+    const todosAdicionales = rqIds.length
+      ? await this.rqAdicionalRepo
+          .createQueryBuilder('a')
+          .where('a.requisicion_id IN (:...ids)', { ids: rqIds })
+          .getMany()
+      : [];
+
     let total_estimado = 0;
     let total_real = 0;
     const rows: object[] = [];
@@ -167,7 +177,6 @@ export class RequisicionesService {
           item.solicitado !== null && item.precio_real !== null
             ? Number(item.solicitado) * Number(item.precio_real)
             : 0;
-
         total_estimado += estimado;
         total_real += real;
 
@@ -177,6 +186,7 @@ export class RequisicionesService {
           lugar: rq.lugar,
           lote: rq.lote,
           categoria: rq.categoria,
+          es_adicional: false,
           item_id: item.id,
           insumo_id: item.insumo_id,
           codigo: item.insumo.codigo,
@@ -188,6 +198,39 @@ export class RequisicionesService {
           numero_factura: item.numero_factura,
           precio_real: item.precio_real,
           proveedor_factura: item.proveedor_factura,
+        });
+      }
+
+      for (const a of todosAdicionales.filter(x => x.requisicion_id === rq.id)) {
+        const estimado =
+          a.solicitado !== null && a.valor_unitario !== null
+            ? Number(a.solicitado) * Number(a.valor_unitario)
+            : 0;
+        const real =
+          a.solicitado !== null && a.precio_real !== null
+            ? Number(a.solicitado) * Number(a.precio_real)
+            : 0;
+        total_estimado += estimado;
+        total_real += real;
+
+        rows.push({
+          rq_id: rq.id,
+          numero_rq: rq.numero_rq,
+          lugar: rq.lugar,
+          lote: rq.lote,
+          categoria: rq.categoria,
+          es_adicional: true,
+          item_id: a.id,
+          insumo_id: null,
+          codigo: null,
+          descripcion: a.descripcion,
+          unidad: a.unidad,
+          proveedor_ordinario: a.proveedor,
+          solicitado: a.solicitado,
+          valor_unitario: a.valor_unitario,
+          numero_factura: a.numero_factura,
+          precio_real: a.precio_real,
+          proveedor_factura: a.proveedor_factura,
         });
       }
     }
@@ -202,8 +245,11 @@ export class RequisicionesService {
     });
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
 
+    const adicionales = await this.rqAdicionalRepo.find({ where: { requisicion_id: id } });
+
     const itemsConTotal = rq.items.map(item => ({
       id: item.id,
+      es_adicional: false,
       insumo_id: item.insumo_id,
       codigo: item.insumo.codigo,
       descripcion: item.insumo.descripcion,
@@ -221,7 +267,28 @@ export class RequisicionesService {
           : null,
     }));
 
-    const total_general = itemsConTotal.reduce(
+    const adicionalesConTotal = adicionales.map(a => ({
+      id: a.id,
+      es_adicional: true,
+      insumo_id: null as string | null,
+      codigo: null as string | null,
+      descripcion: a.descripcion,
+      unidad: a.unidad,
+      valor_unitario: a.valor_unitario,
+      proveedor_ordinario: a.proveedor,
+      proveedor_extraordinario: null as string | null,
+      solicitado: a.solicitado,
+      numero_factura: a.numero_factura,
+      precio_real: a.precio_real,
+      proveedor_factura: a.proveedor_factura,
+      total:
+        a.solicitado !== null && a.valor_unitario !== null
+          ? Number(a.solicitado) * Number(a.valor_unitario)
+          : null,
+    }));
+
+    const allItems = [...itemsConTotal, ...adicionalesConTotal];
+    const total_general = allItems.reduce(
       (sum, i) => (i.total !== null ? sum + i.total : sum),
       0,
     );
@@ -238,7 +305,7 @@ export class RequisicionesService {
       numero_contrato: rq.numero_contrato,
       estado: rq.estado,
       total_general,
-      items: itemsConTotal,
+      items: allItems,
       created_at: rq.created_at,
       updated_at: rq.updated_at,
     };
@@ -284,11 +351,16 @@ export class RequisicionesService {
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
 
     for (const itemDto of dto.items) {
-      await this.itemRepo.update(itemDto.id, {
+      const patch = {
         ...(itemDto.numero_factura    !== undefined && { numero_factura:    itemDto.numero_factura }),
         ...(itemDto.precio_real       !== undefined && { precio_real:       itemDto.precio_real }),
         ...(itemDto.proveedor_factura !== undefined && { proveedor_factura: itemDto.proveedor_factura }),
-      });
+      };
+      if (itemDto.es_adicional) {
+        await this.rqAdicionalRepo.update(itemDto.id, patch);
+      } else {
+        await this.itemRepo.update(itemDto.id, patch);
+      }
     }
 
     return this.findOne(id);
