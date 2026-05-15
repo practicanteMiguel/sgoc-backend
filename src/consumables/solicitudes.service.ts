@@ -169,7 +169,7 @@ export class SolicitudesService {
             id: a.id,
             es_adicional: true,
             insumo_id: null as string | null,
-            codigo: null as string | null,
+            codigo: 'ADC' as string | null,
             descripcion: a.descripcion,
             unidad: a.unidad,
             valor_unitario: a.valor_unitario,

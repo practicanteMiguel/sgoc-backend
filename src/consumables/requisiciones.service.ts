@@ -222,7 +222,7 @@ export class RequisicionesService {
           es_adicional: true,
           item_id: a.id,
           insumo_id: null,
-          codigo: null,
+          codigo: 'ADC',
           descripcion: a.descripcion,
           unidad: a.unidad,
           proveedor_ordinario: a.proveedor,
@@ -271,7 +271,7 @@ export class RequisicionesService {
       id: a.id,
       es_adicional: true,
       insumo_id: null as string | null,
-      codigo: null as string | null,
+      codigo: 'ADC' as string | null,
       descripcion: a.descripcion,
       unidad: a.unidad,
       valor_unitario: a.valor_unitario,
@@ -350,13 +350,16 @@ export class RequisicionesService {
     const rq = await this.rqRepo.findOne({ where: { id } });
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
 
+    const adicionales = await this.rqAdicionalRepo.find({ where: { requisicion_id: id } });
+    const adicionalIds = new Set(adicionales.map(a => a.id));
+
     for (const itemDto of dto.items) {
       const patch = {
         ...(itemDto.numero_factura    !== undefined && { numero_factura:    itemDto.numero_factura }),
         ...(itemDto.precio_real       !== undefined && { precio_real:       itemDto.precio_real }),
         ...(itemDto.proveedor_factura !== undefined && { proveedor_factura: itemDto.proveedor_factura }),
       };
-      if (itemDto.es_adicional) {
+      if (adicionalIds.has(itemDto.id) || itemDto.es_adicional) {
         await this.rqAdicionalRepo.update(itemDto.id, patch);
       } else {
         await this.itemRepo.update(itemDto.id, patch);
