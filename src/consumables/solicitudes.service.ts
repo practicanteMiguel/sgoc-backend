@@ -294,6 +294,36 @@ export class SolicitudesService {
     });
     if (!s) throw new NotFoundException('Solicitud no encontrada');
 
+    if (dto.ajustes?.length) {
+      const itemMap = new Map(s.items.map(i => [i.id, i.insumo.codigo]));
+
+      for (const ajuste of dto.ajustes) {
+        await this.itemRepo.update(ajuste.item_id, { solicitado: ajuste.solicitado_nuevo });
+        const item = s.items.find(i => i.id === ajuste.item_id);
+        if (item) item.solicitado = ajuste.solicitado_nuevo;
+      }
+
+      if (s.field_id) {
+        const field = await this.fieldRepo.findOne({
+          where: { id: s.field_id },
+          relations: ['supervisor'],
+        });
+        if (field?.supervisor) {
+          const nombreMes = MESES[s.mes - 1];
+          const cambios = dto.ajustes
+            .map(a => `${itemMap.get(a.item_id) ?? a.item_id} de ${a.solicitado_original} → ${a.solicitado_nuevo}`)
+            .join(', ');
+          await this.notificationsService.createSystem({
+            user_id: field.supervisor.id,
+            title: 'Ajuste de cantidades en tu solicitud',
+            message: `El encargado ajustó las cantidades de tu solicitud de ${nombreMes} ${s.anio}: ${cambios}.`,
+            priority: NotificationPriority.HIGH,
+            data: { solicitud_id: s.id },
+          });
+        }
+      }
+    }
+
     const adicionales = await this.adicionalRepo.find({
       where: { solicitud_id: s.id },
     });

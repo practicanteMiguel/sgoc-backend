@@ -108,6 +108,20 @@ export class UpdateAdicionalDto {
   solicitado?: number;
 }
 
+export class AjusteItemDto {
+  @ApiProperty()
+  @IsUUID()
+  item_id!: string;
+
+  @ApiProperty()
+  @IsNumber()
+  solicitado_nuevo!: number;
+
+  @ApiProperty()
+  @IsNumber()
+  solicitado_original!: number;
+}
+
 export class GenerarRqsDto {
   @ApiProperty()
   @IsUUID()
@@ -118,4 +132,11 @@ export class GenerarRqsDto {
   @ValidateNested({ each: true })
   @Type(() => AsignacionRqDto)
   asignaciones!: AsignacionRqDto[];
+
+  @ApiPropertyOptional({ type: [AjusteItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AjusteItemDto)
+  ajustes?: AjusteItemDto[];
 }
