@@ -84,6 +84,7 @@ export class SolicitudesService {
   async findAll(mes: number, anio: number) {
     const solicitudes = await this.solicitudRepo.find({
       where: { mes, anio },
+      relations: ['field'],
       order: { lugar: 'ASC' },
     });
 
@@ -96,6 +97,7 @@ export class SolicitudesService {
       estado: s.estado,
       fecha: s.fecha,
       nombre_solicitante: s.nombre_solicitante,
+      presupuesto: s.field?.presupuesto ?? null,
       created_at: s.created_at,
     }));
   }
@@ -103,7 +105,7 @@ export class SolicitudesService {
   async findOne(id: string) {
     const s = await this.solicitudRepo.findOne({
       where: { id },
-      relations: ['items', 'items.insumo'],
+      relations: ['items', 'items.insumo', 'field'],
     });
     if (!s) throw new NotFoundException('Solicitud no encontrada');
 
@@ -186,6 +188,8 @@ export class SolicitudesService {
 
     const total_general = categorias.reduce((sum, c) => sum + c.subtotal, 0);
 
+    const presupuesto = s.field?.presupuesto != null ? Number(s.field.presupuesto) : null;
+
     return {
       id: s.id,
       mes: s.mes,
@@ -197,6 +201,8 @@ export class SolicitudesService {
       nombre_solicitante: s.nombre_solicitante,
       numero_contrato: s.numero_contrato,
       estado: s.estado,
+      presupuesto,
+      excede_presupuesto: presupuesto !== null ? total_general > presupuesto : null,
       total_general,
       categorias,
       created_at: s.created_at,
@@ -295,6 +301,7 @@ export class SolicitudesService {
 
     const solicitudes = await this.solicitudRepo.find({
       where: { field_id: field.id, mes, anio },
+      relations: ['field'],
       order: { created_at: 'ASC' },
     });
 
@@ -307,6 +314,7 @@ export class SolicitudesService {
       estado: s.estado,
       fecha: s.fecha,
       nombre_solicitante: s.nombre_solicitante,
+      presupuesto: s.field?.presupuesto ?? null,
       created_at: s.created_at,
     }));
   }

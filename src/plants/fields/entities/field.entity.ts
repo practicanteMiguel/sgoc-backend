@@ -23,6 +23,9 @@ export class Field {
   @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
   center_lng!: number | null;
 
+  @Column({ type: 'decimal', precision: 14, scale: 2, nullable: true })
+  presupuesto!: number | null;
+
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'supervisor_id' })
   supervisor!: User;

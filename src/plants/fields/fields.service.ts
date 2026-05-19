@@ -93,6 +93,14 @@ export class FieldsService {
     return { message: `Supervisor asignado a la planta ${field.name}` };
   }
 
+  async setPresupuesto(fieldId: string, presupuesto: number | null) {
+    const field = await this.fieldRepo.findOne({ where: { id: fieldId } });
+    if (!field) throw new NotFoundException('Planta no encontrada');
+    field.presupuesto = presupuesto;
+    await this.fieldRepo.save(field);
+    return { id: field.id, name: field.name, presupuesto: field.presupuesto };
+  }
+
   async removeSupervisor(fieldId: string) {
     const field = await this.fieldRepo.findOne({
       where: { id: fieldId },

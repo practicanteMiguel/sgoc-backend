@@ -10,7 +10,7 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { FieldsService } from './fields.service';
 import { CreateFieldDto } from './dto/create-field.dto';
-import { UpdateFieldDto } from './dto/update-field.dto';
+import { UpdateFieldDto, SetPresupuestoDto } from './dto/update-field.dto';
 import { AssignSupervisorDto } from './dto/assign-supervisor.dto';
 
 @ApiTags('Fields')
@@ -51,6 +51,13 @@ export class FieldsController {
   @ApiOperation({ summary: 'Eliminar planta (soft delete)' })
   remove(@Param('id') id: string) {
     return this.fieldsService.remove(id);
+  }
+
+  @Patch(':id/presupuesto')
+  @Roles('admin', 'coordinator', 'module_manager')
+  @ApiOperation({ summary: 'Asignar o actualizar el presupuesto mensual de la planta. Enviar null para eliminar el tope.' })
+  setPresupuesto(@Param('id') id: string, @Body() dto: SetPresupuestoDto) {
+    return this.fieldsService.setPresupuesto(id, dto.presupuesto);
   }
 
   @Post(':id/supervisor')

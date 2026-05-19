@@ -1,5 +1,5 @@
-import { IsString, IsOptional, IsNumber } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional, IsNumber, ValidateIf } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class UpdateFieldDto {
@@ -18,4 +18,11 @@ export class UpdateFieldDto {
   @ApiPropertyOptional()
   @IsOptional() @Type(() => Number) @IsNumber()
   center_lng?: number;
+}
+
+export class SetPresupuestoDto {
+  @ApiProperty({ nullable: true, type: Number })
+  @ValidateIf((o) => o.presupuesto !== null)
+  @IsNumber()
+  presupuesto!: number | null;
 }
