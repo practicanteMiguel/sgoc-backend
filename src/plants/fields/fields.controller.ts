@@ -12,6 +12,7 @@ import { FieldsService } from './fields.service';
 import { CreateFieldDto } from './dto/create-field.dto';
 import { UpdateFieldDto, SetPresupuestoDto } from './dto/update-field.dto';
 import { AssignSupervisorDto } from './dto/assign-supervisor.dto';
+import { CreateFieldLugarDto } from './dto/create-field-lugar.dto';
 
 @ApiTags('Fields')
 @ApiBearerAuth()
@@ -72,5 +73,36 @@ export class FieldsController {
   @ApiOperation({ summary: 'Remover supervisor de la planta' })
   removeSupervisor(@Param('id') id: string) {
     return this.fieldsService.removeSupervisor(id);
+  }
+
+  @Get(':id/lugares')
+  @ApiOperation({ summary: 'Listar subespacios de una planta con sus presupuestos' })
+  findLugares(@Param('id') id: string) {
+    return this.fieldsService.findLugares(id);
+  }
+
+  @Post(':id/lugares')
+  @Roles('admin', 'coordinator', 'module_manager', 'supervisor')
+  @ApiOperation({ summary: 'Crear un subespacio para la planta (ej. Invernadero Norte)' })
+  createLugar(@Param('id') id: string, @Body() dto: CreateFieldLugarDto) {
+    return this.fieldsService.createLugar(id, dto);
+  }
+
+  @Patch(':id/lugares/:lugarId/presupuesto')
+  @Roles('admin', 'coordinator', 'module_manager')
+  @ApiOperation({ summary: 'Asignar presupuesto al subespacio. Enviar null para eliminar el tope.' })
+  setLugarPresupuesto(
+    @Param('id') id: string,
+    @Param('lugarId') lugarId: string,
+    @Body() dto: SetPresupuestoDto,
+  ) {
+    return this.fieldsService.setLugarPresupuesto(id, lugarId, dto.presupuesto);
+  }
+
+  @Delete(':id/lugares/:lugarId')
+  @Roles('admin', 'coordinator', 'module_manager', 'supervisor')
+  @ApiOperation({ summary: 'Eliminar un subespacio de la planta' })
+  removeLugar(@Param('id') id: string, @Param('lugarId') lugarId: string) {
+    return this.fieldsService.removeLugar(id, lugarId);
   }
 }

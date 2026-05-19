@@ -25,9 +25,13 @@ export class CrearSolicitudAdicionalDto {
   @IsInt() @Min(2024)
   anio!: number;
 
-  @ApiProperty({ example: 'Invernadero Norte' })
-  @IsString() @IsNotEmpty()
-  lugar!: string;
+  @ApiPropertyOptional({ description: 'ID del lugar predefinido en la planta. Si se provee, se usa su nombre y presupuesto.' })
+  @IsOptional() @IsUUID()
+  field_lugar_id?: string;
+
+  @ApiPropertyOptional({ example: 'Invernadero Norte', description: 'Requerido si no se provee field_lugar_id' })
+  @IsOptional() @IsString() @IsNotEmpty()
+  lugar?: string;
 }
 
 export class ItemLlenadoDto {

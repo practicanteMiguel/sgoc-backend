@@ -3,6 +3,7 @@ import {
   CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn,
 } from 'typeorm';
 import { Field } from '../../plants/fields/entities/field.entity';
+import { FieldLugar } from '../../plants/fields/entities/field-lugar.entity';
 import { SolicitudItem } from './solicitud-item.entity';
 
 export enum EstadoSolicitud {
@@ -27,6 +28,13 @@ export class Solicitud {
   @ManyToOne(() => Field, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'field_id' })
   field!: Field | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  field_lugar_id!: string | null;
+
+  @ManyToOne(() => FieldLugar, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'field_lugar_id' })
+  field_lugar!: FieldLugar | null;
 
   @Column({ type: 'varchar' })
   lugar!: string;

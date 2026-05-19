@@ -25,14 +25,16 @@ export class SolicitudesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Lista solicitudes de un periodo' })
+  @ApiOperation({ summary: 'Lista solicitudes de un periodo. Filtrar por planta con field_id.' })
   @ApiQuery({ name: 'mes', type: Number, example: 5 })
   @ApiQuery({ name: 'anio', type: Number, example: 2026 })
+  @ApiQuery({ name: 'field_id', required: false, type: String })
   findAll(
     @Query('mes', ParseIntPipe) mes: number,
     @Query('anio', ParseIntPipe) anio: number,
+    @Query('field_id') fieldId?: string,
   ) {
-    return this.service.findAll(mes, anio);
+    return this.service.findAll(mes, anio, fieldId);
   }
 
   @Get('mi-solicitud')

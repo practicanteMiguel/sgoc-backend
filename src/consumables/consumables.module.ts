@@ -11,6 +11,7 @@ import { SolicitudItem } from './entities/solicitud-item.entity';
 import { SolicitudAdicional } from './entities/solicitud-adicional.entity';
 import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
 import { Field } from '../plants/fields/entities/field.entity';
+import { FieldLugar } from '../plants/fields/entities/field-lugar.entity';
 import { AppModule as ModuloEntity } from '../modules/entities/module.entity';
 import { UserModuleAccess } from '../modules/entities/user-module.entity';
 import { InsumosService } from './insumos.service';
@@ -23,7 +24,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Insumo, InsumoHistorial, PeriodoCerrado, InsumosBorrador, Requisicion, RequisicionItem, Solicitud, SolicitudItem, SolicitudAdicional, RequisicionItemAdicional, Field, ModuloEntity, UserModuleAccess]),
+    TypeOrmModule.forFeature([Insumo, InsumoHistorial, PeriodoCerrado, InsumosBorrador, Requisicion, RequisicionItem, Solicitud, SolicitudItem, SolicitudAdicional, RequisicionItemAdicional, Field, FieldLugar, ModuloEntity, UserModuleAccess]),
     NotificationsModule,
   ],
   controllers: [InsumosController, RequisicionesController, SolicitudesController],

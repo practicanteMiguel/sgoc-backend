@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { Solicitud, EstadoSolicitud } from './entities/solicitud.entity';
@@ -9,12 +9,20 @@ import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
 import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
 import { Field } from '../plants/fields/entities/field.entity';
+import { FieldLugar } from '../plants/fields/entities/field-lugar.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
 import {
   CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto,
   CrearAdicionalDto, UpdateAdicionalDto, CrearSolicitudAdicionalDto,
 } from './dto/create-solicitud.dto';
+
+function presupuestoDe(s: { field_lugar_id: string | null; field_lugar?: { presupuesto: number | null } | null; field?: { presupuesto: number | null } | null }): number | null {
+  if (s.field_lugar_id) {
+    return s.field_lugar?.presupuesto != null ? Number(s.field_lugar.presupuesto) : null;
+  }
+  return s.field?.presupuesto != null ? Number(s.field.presupuesto) : null;
+}
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -31,7 +39,8 @@ export class SolicitudesService {
     @InjectRepository(Requisicion) private rqRepo: Repository<Requisicion>,
     @InjectRepository(RequisicionItem) private rqItemRepo: Repository<RequisicionItem>,
     @InjectRepository(RequisicionItemAdicional) private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
-    @InjectRepository(Field) private fieldRepo: Repository<Field>,
+    @InjectRepository(Field)      private fieldRepo:      Repository<Field>,
+    @InjectRepository(FieldLugar) private fieldLugarRepo:  Repository<FieldLugar>,
     private notificationsService: NotificationsService,
   ) {}
 
@@ -81,10 +90,10 @@ export class SolicitudesService {
     return { enviadas: resultado.length, solicitudes: resultado };
   }
 
-  async findAll(mes: number, anio: number) {
+  async findAll(mes: number, anio: number, fieldId?: string) {
     const solicitudes = await this.solicitudRepo.find({
-      where: { mes, anio },
-      relations: ['field'],
+      where: { mes, anio, ...(fieldId ? { field_id: fieldId } : {}) },
+      relations: ['field', 'field_lugar'],
       order: { lugar: 'ASC' },
     });
 
@@ -92,12 +101,14 @@ export class SolicitudesService {
       id: s.id,
       mes: s.mes,
       anio: s.anio,
+      field_id: s.field_id,
+      field_lugar_id: s.field_lugar_id,
       lugar: s.lugar,
       lote: s.lote,
       estado: s.estado,
       fecha: s.fecha,
       nombre_solicitante: s.nombre_solicitante,
-      presupuesto: s.field?.presupuesto ?? null,
+      presupuesto: presupuestoDe(s),
       created_at: s.created_at,
     }));
   }
@@ -105,7 +116,7 @@ export class SolicitudesService {
   async findOne(id: string) {
     const s = await this.solicitudRepo.findOne({
       where: { id },
-      relations: ['items', 'items.insumo', 'field'],
+      relations: ['items', 'items.insumo', 'field', 'field_lugar'],
     });
     if (!s) throw new NotFoundException('Solicitud no encontrada');
 
@@ -188,7 +199,7 @@ export class SolicitudesService {
 
     const total_general = categorias.reduce((sum, c) => sum + c.subtotal, 0);
 
-    const presupuesto = s.field?.presupuesto != null ? Number(s.field.presupuesto) : null;
+    const presupuesto = presupuestoDe(s);
 
     return {
       id: s.id,
@@ -197,6 +208,7 @@ export class SolicitudesService {
       lugar: s.lugar,
       lote: s.lote,
       field_id: s.field_id,
+      field_lugar_id: s.field_lugar_id,
       fecha: s.fecha,
       nombre_solicitante: s.nombre_solicitante,
       numero_contrato: s.numero_contrato,
@@ -301,7 +313,7 @@ export class SolicitudesService {
 
     const solicitudes = await this.solicitudRepo.find({
       where: { field_id: field.id, mes, anio },
-      relations: ['field'],
+      relations: ['field', 'field_lugar'],
       order: { created_at: 'ASC' },
     });
 
@@ -309,12 +321,13 @@ export class SolicitudesService {
       id: s.id,
       mes: s.mes,
       anio: s.anio,
+      field_lugar_id: s.field_lugar_id,
       lugar: s.lugar,
       lote: s.lote,
       estado: s.estado,
       fecha: s.fecha,
       nombre_solicitante: s.nombre_solicitante,
-      presupuesto: s.field?.presupuesto ?? null,
+      presupuesto: presupuestoDe(s),
       created_at: s.created_at,
     }));
   }
@@ -324,6 +337,22 @@ export class SolicitudesService {
       where: { supervisor: { id: userId } },
     });
     if (!field) throw new NotFoundException('No tienes una planta asignada como supervisor');
+
+    let lugar: string;
+    let field_lugar_id: string | null = null;
+
+    if (dto.field_lugar_id) {
+      const fieldLugar = await this.fieldLugarRepo.findOne({
+        where: { id: dto.field_lugar_id, field_id: field.id },
+      });
+      if (!fieldLugar) throw new NotFoundException('Lugar no encontrado en tu planta');
+      lugar = fieldLugar.nombre;
+      field_lugar_id = fieldLugar.id;
+    } else if (dto.lugar) {
+      lugar = dto.lugar;
+    } else {
+      throw new BadRequestException('Debes proveer field_lugar_id o lugar');
+    }
 
     const insumos = await this.insumoRepo.find({
       where: { activo: true },
@@ -335,7 +364,8 @@ export class SolicitudesService {
         mes: dto.mes,
         anio: dto.anio,
         field_id: field.id,
-        lugar: dto.lugar,
+        field_lugar_id,
+        lugar,
       }),
     );
 

@@ -4,9 +4,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Field } from './entities/field.entity';
+import { FieldLugar } from './entities/field-lugar.entity';
 import { User } from '../../users/entities/user.entity';
 import { CreateFieldDto } from './dto/create-field.dto';
 import { UpdateFieldDto } from './dto/update-field.dto';
+import { CreateFieldLugarDto } from './dto/create-field-lugar.dto';
 
 const pickCreator = (u: any) => u
   ? { id: u.id, first_name: u.first_name, last_name: u.last_name, email: u.email, position: u.position }
@@ -15,8 +17,9 @@ const pickCreator = (u: any) => u
 @Injectable()
 export class FieldsService {
   constructor(
-    @InjectRepository(Field) private fieldRepo: Repository<Field>,
-    @InjectRepository(User)  private userRepo: Repository<User>,
+    @InjectRepository(Field)      private fieldRepo:      Repository<Field>,
+    @InjectRepository(FieldLugar) private lugarRepo:      Repository<FieldLugar>,
+    @InjectRepository(User)       private userRepo:       Repository<User>,
   ) {}
 
   async findAll(page = 1, limit = 20) {
@@ -91,6 +94,33 @@ export class FieldsService {
     await this.userRepo.update(userId, { field_id: fieldId });
 
     return { message: `Supervisor asignado a la planta ${field.name}` };
+  }
+
+  async findLugares(fieldId: string) {
+    await this.getEntity(fieldId);
+    return this.lugarRepo.find({ where: { field_id: fieldId }, order: { nombre: 'ASC' } });
+  }
+
+  async createLugar(fieldId: string, dto: CreateFieldLugarDto) {
+    await this.getEntity(fieldId);
+    return this.lugarRepo.save(
+      this.lugarRepo.create({ field_id: fieldId, nombre: dto.nombre, presupuesto: dto.presupuesto ?? null }),
+    );
+  }
+
+  async setLugarPresupuesto(fieldId: string, lugarId: string, presupuesto: number | null) {
+    const lugar = await this.lugarRepo.findOne({ where: { id: lugarId, field_id: fieldId } });
+    if (!lugar) throw new NotFoundException('Lugar no encontrado');
+    lugar.presupuesto = presupuesto;
+    await this.lugarRepo.save(lugar);
+    return { id: lugar.id, nombre: lugar.nombre, presupuesto: lugar.presupuesto };
+  }
+
+  async removeLugar(fieldId: string, lugarId: string) {
+    const lugar = await this.lugarRepo.findOne({ where: { id: lugarId, field_id: fieldId } });
+    if (!lugar) throw new NotFoundException('Lugar no encontrado');
+    await this.lugarRepo.remove(lugar);
+    return { message: 'Lugar eliminado' };
   }
 
   async setPresupuesto(fieldId: string, presupuesto: number | null) {
