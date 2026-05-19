@@ -16,6 +16,20 @@ export class CrearSolicitudesDto {
   anio!: number;
 }
 
+export class CrearSolicitudAdicionalDto {
+  @ApiProperty({ example: 5 })
+  @IsInt() @Min(1) @Max(12)
+  mes!: number;
+
+  @ApiProperty({ example: 2026 })
+  @IsInt() @Min(2024)
+  anio!: number;
+
+  @ApiProperty({ example: 'Invernadero Norte' })
+  @IsString() @IsNotEmpty()
+  lugar!: string;
+}
+
 export class ItemLlenadoDto {
   @ApiProperty()
   @IsUUID()

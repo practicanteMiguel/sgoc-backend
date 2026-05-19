@@ -5,7 +5,7 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SolicitudesService } from './solicitudes.service';
-import { CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto, CrearAdicionalDto, UpdateAdicionalDto } from './dto/create-solicitud.dto';
+import { CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto, CrearAdicionalDto, UpdateAdicionalDto, CrearSolicitudAdicionalDto } from './dto/create-solicitud.dto';
 
 @ApiTags('Solicitudes')
 @Controller('solicitudes')
@@ -46,6 +46,29 @@ export class SolicitudesController {
     @Query('anio', ParseIntPipe) anio: number,
   ) {
     return this.service.findMiSolicitud(userId, mes, anio);
+  }
+
+  @Get('mis-solicitudes')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Lista todas las solicitudes del periodo para el supervisor autenticado (principal + adicionales)' })
+  @ApiQuery({ name: 'mes', type: Number, example: 5 })
+  @ApiQuery({ name: 'anio', type: Number, example: 2026 })
+  findMisSolicitudes(
+    @CurrentUser('id') userId: string,
+    @Query('mes', ParseIntPipe) mes: number,
+    @Query('anio', ParseIntPipe) anio: number,
+  ) {
+    return this.service.findMisSolicitudes(userId, mes, anio);
+  }
+
+  @Post('adicional')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Supervisor crea una solicitud adicional para un espacio especifico de su campo' })
+  crearAdicional(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CrearSolicitudAdicionalDto,
+  ) {
+    return this.service.crearAdicional(userId, dto);
   }
 
   @Get(':id')

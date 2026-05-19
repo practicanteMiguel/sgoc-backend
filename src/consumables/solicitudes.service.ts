@@ -13,7 +13,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
 import {
   CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto,
-  CrearAdicionalDto, UpdateAdicionalDto,
+  CrearAdicionalDto, UpdateAdicionalDto, CrearSolicitudAdicionalDto,
 } from './dto/create-solicitud.dto';
 
 const MESES = [
@@ -285,6 +285,58 @@ export class SolicitudesService {
     if (!s) throw new NotFoundException('No hay solicitud para este periodo');
 
     return this.findOne(s.id);
+  }
+
+  async findMisSolicitudes(userId: string, mes: number, anio: number) {
+    const field = await this.fieldRepo.findOne({
+      where: { supervisor: { id: userId } },
+    });
+    if (!field) throw new NotFoundException('No tienes una planta asignada como supervisor');
+
+    const solicitudes = await this.solicitudRepo.find({
+      where: { field_id: field.id, mes, anio },
+      order: { created_at: 'ASC' },
+    });
+
+    return solicitudes.map(s => ({
+      id: s.id,
+      mes: s.mes,
+      anio: s.anio,
+      lugar: s.lugar,
+      lote: s.lote,
+      estado: s.estado,
+      fecha: s.fecha,
+      nombre_solicitante: s.nombre_solicitante,
+      created_at: s.created_at,
+    }));
+  }
+
+  async crearAdicional(userId: string, dto: CrearSolicitudAdicionalDto) {
+    const field = await this.fieldRepo.findOne({
+      where: { supervisor: { id: userId } },
+    });
+    if (!field) throw new NotFoundException('No tienes una planta asignada como supervisor');
+
+    const insumos = await this.insumoRepo.find({
+      where: { activo: true },
+      order: { categoria: 'ASC', codigo: 'ASC' },
+    });
+
+    const solicitud = await this.solicitudRepo.save(
+      this.solicitudRepo.create({
+        mes: dto.mes,
+        anio: dto.anio,
+        field_id: field.id,
+        lugar: dto.lugar,
+      }),
+    );
+
+    const items = insumos.map(insumo =>
+      this.itemRepo.create({ solicitud_id: solicitud.id, insumo_id: insumo.id, solicitado: null }),
+    );
+    await this.itemRepo.save(items);
+
+    return this.findOne(solicitud.id);
   }
 
   async generarRqs(dto: GenerarRqsDto) {
