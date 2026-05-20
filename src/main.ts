@@ -13,10 +13,11 @@ async function bootstrap() {
 
   app.enableCors({
     origin: process.env.NODE_ENV === 'production'
-      ? process.env.FRONTEND_URL
+      ? (process.env.FRONTEND_URL ?? false)
       : '*',
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   });
   
 
