@@ -28,7 +28,8 @@ export class MailService {
       });
       this.logger.log(`✅ Email de verificación enviado a ${email}`);
     } catch (err: any) {
-      this.logger.error(`❌ Error enviando email a ${email}: ${err.message}`);
+      const body = err.response?.body ?? err.response ?? err.message;
+      this.logger.error(`❌ Error enviando email a ${email}: ${JSON.stringify(body)}`);
       throw new InternalServerErrorException(
         `No se pudo enviar el email de verificación: ${err.message}`,
       );
