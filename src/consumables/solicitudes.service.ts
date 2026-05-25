@@ -482,6 +482,10 @@ export class SolicitudesService {
       resultado.push({ id: rq.id, numero_rq: rq.numero_rq, categoria: rq.categoria, lugar: rq.lugar! });
     }
 
-    return { created: resultado.length, requisiciones: resultado };
+    if (resultado.length > 0) {
+      await this.solicitudRepo.update(s.id, { estado: EstadoSolicitud.GENERADA });
+    }
+
+    return { created: resultado.length, requisiciones: resultado, estado: EstadoSolicitud.GENERADA };
   }
 }

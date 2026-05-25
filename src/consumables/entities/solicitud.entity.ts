@@ -9,6 +9,7 @@ import { SolicitudItem } from './solicitud-item.entity';
 export enum EstadoSolicitud {
   PENDIENTE  = 'PENDIENTE',
   COMPLETADA = 'COMPLETADA',
+  GENERADA   = 'GENERADA',
 }
 
 @Entity('solicitudes')
