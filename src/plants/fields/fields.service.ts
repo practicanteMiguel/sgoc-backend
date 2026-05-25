@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { Field } from './entities/field.entity';
 import { FieldLugar } from './entities/field-lugar.entity';
 import { User } from '../../users/entities/user.entity';
+import { Solicitud, EstadoSolicitud } from '../../consumables/entities/solicitud.entity';
 import { CreateFieldDto } from './dto/create-field.dto';
 import { UpdateFieldDto } from './dto/update-field.dto';
 import { CreateFieldLugarDto } from './dto/create-field-lugar.dto';
@@ -20,6 +21,7 @@ export class FieldsService {
     @InjectRepository(Field)      private fieldRepo:      Repository<Field>,
     @InjectRepository(FieldLugar) private lugarRepo:      Repository<FieldLugar>,
     @InjectRepository(User)       private userRepo:       Repository<User>,
+    @InjectRepository(Solicitud)  private solicitudRepo:  Repository<Solicitud>,
   ) {}
 
   async findAll(page = 1, limit = 20) {
@@ -119,6 +121,13 @@ export class FieldsService {
   async removeLugar(fieldId: string, lugarId: string) {
     const lugar = await this.lugarRepo.findOne({ where: { id: lugarId, field_id: fieldId } });
     if (!lugar) throw new NotFoundException('Lugar no encontrado');
+
+    // Eliminar solicitudes PENDIENTES vinculadas a este lugar (las completadas se conservan)
+    await this.solicitudRepo.delete({
+      field_lugar_id: lugarId,
+      estado: EstadoSolicitud.PENDIENTE,
+    });
+
     await this.lugarRepo.remove(lugar);
     return { message: 'Lugar eliminado' };
   }
