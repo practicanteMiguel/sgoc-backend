@@ -340,6 +340,7 @@ export class SolicitudesService {
 
     let lugar: string;
     let field_lugar_id: string | null = null;
+    let lote = 45;
 
     if (dto.field_lugar_id) {
       const fieldLugar = await this.fieldLugarRepo.findOne({
@@ -348,6 +349,7 @@ export class SolicitudesService {
       if (!fieldLugar) throw new NotFoundException('Lugar no encontrado en tu planta');
       lugar = fieldLugar.nombre;
       field_lugar_id = fieldLugar.id;
+      lote = fieldLugar.lote;
     } else if (dto.lugar) {
       lugar = dto.lugar;
     } else {
@@ -366,6 +368,7 @@ export class SolicitudesService {
         field_id: field.id,
         field_lugar_id,
         lugar,
+        lote,
       }),
     );
 

@@ -1,10 +1,16 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, ValidateIf } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsInt, Min, ValidateIf } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFieldLugarDto {
   @ApiProperty({ example: 'Invernadero Norte' })
   @IsString() @IsNotEmpty()
   nombre!: string;
+
+  @ApiPropertyOptional({ example: 45, default: 45 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  lote?: number;
 
   @ApiPropertyOptional({ nullable: true, type: Number })
   @IsOptional()

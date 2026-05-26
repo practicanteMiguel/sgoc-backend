@@ -20,6 +20,9 @@ export class FieldLugar {
   @Column()
   nombre!: string;
 
+  @Column({ type: 'int', default: 45 })
+  lote!: number;
+
   @Column({ type: 'decimal', precision: 14, scale: 2, nullable: true })
   presupuesto!: number | null;
 

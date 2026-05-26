@@ -106,7 +106,12 @@ export class FieldsService {
   async createLugar(fieldId: string, dto: CreateFieldLugarDto) {
     await this.getEntity(fieldId);
     return this.lugarRepo.save(
-      this.lugarRepo.create({ field_id: fieldId, nombre: dto.nombre, presupuesto: dto.presupuesto ?? null }),
+      this.lugarRepo.create({
+        field_id: fieldId,
+        nombre: dto.nombre,
+        lote: dto.lote ?? 45,
+        presupuesto: dto.presupuesto ?? null,
+      }),
     );
   }
 
