@@ -8,10 +8,12 @@ import { Field } from '../plants/fields/entities/field.entity';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { MailModule } from '../mail/mail.module';
+import { CloudinaryService } from '../plants/activities/cloudinary/cloudinary.service';
+
 @Module({
   imports: [TypeOrmModule.forFeature([User, Session, UserRole, Role, Field]), MailModule],
   controllers: [UsersController],
-  providers: [UsersService],
-  exports: [UsersService], 
+  providers: [UsersService, CloudinaryService],
+  exports: [UsersService],
 })
 export class UsersModule {}

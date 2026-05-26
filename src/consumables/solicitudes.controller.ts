@@ -19,9 +19,10 @@ export class SolicitudesController {
   }
 
   @Post('generar-rqs')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Genera RQs formales por categoria a partir de una solicitud completada. Solo crea RQ para categorias con al menos un item solicitado.' })
-  generarRqs(@Body() dto: GenerarRqsDto) {
-    return this.service.generarRqs(dto);
+  generarRqs(@CurrentUser('id') userId: string, @Body() dto: GenerarRqsDto) {
+    return this.service.generarRqs(dto, userId);
   }
 
   @Get()
@@ -92,9 +93,14 @@ export class SolicitudesController {
   }
 
   @Patch(':id/llenado')
-  @ApiOperation({ summary: 'Supervisor llena fecha, nombre, contrato y cantidades solicitadas' })
-  llenado(@Param('id') id: string, @Body() dto: LlenadoSolicitudDto) {
-    return this.service.llenado(id, dto);
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Supervisor llena fecha, nombre, contrato y cantidades solicitadas. Requiere firma cargada previamente.' })
+  llenado(
+    @Param('id') id: string,
+    @Body() dto: LlenadoSolicitudDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.service.llenado(id, dto, userId);
   }
 
   @Post(':id/adicionales')

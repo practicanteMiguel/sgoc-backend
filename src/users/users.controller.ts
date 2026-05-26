@@ -1,8 +1,10 @@
 import {
   Controller, Get, Post, Patch, Delete,
   Body, Param, Query, UseGuards,
+  UploadedFile, UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -59,6 +61,23 @@ export class UsersController {
   @ApiOperation({ summary: 'Eliminar usuario (soft delete)' })
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Post('me/firma')
+  @ApiOperation({ summary: 'Subir o actualizar mi firma (imagen PNG/JPG). Se sobreescribe en Cloudinary.' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('firma'))
+  uploadFirma(
+    @CurrentUser() user: User,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.usersService.uploadFirma(user.id, file);
+  }
+
+  @Get('me/firma')
+  @ApiOperation({ summary: 'Obtener URL de mi firma actual' })
+  getFirma(@CurrentUser() user: User) {
+    return this.usersService.getFirma(user.id);
   }
 
   // Cambio de contraseña propio — cualquier usuario autenticado

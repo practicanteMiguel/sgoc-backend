@@ -43,6 +43,12 @@ export class Requisicion {
   @Column({ type: 'enum', enum: EstadoRequisicion, default: EstadoRequisicion.ABIERTA })
   estado!: EstadoRequisicion;
 
+  @Column({ type: 'text', nullable: true })
+  firma_supervisor_url!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  firma_encargado_url!: string | null;
+
   @Column({ type: 'uuid', nullable: true })
   field_id!: string | null;
 

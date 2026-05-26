@@ -31,6 +31,19 @@ export class CloudinaryService {
     });
   }
 
+  async uploadAndReplace(file: Express.Multer.File, folder: string, publicId: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder, public_id: publicId, overwrite: true, resource_type: 'image' },
+        (err, result) => {
+          if (err || !result) return reject(err ?? new Error('Upload failed'));
+          resolve(result.secure_url);
+        },
+      );
+      Readable.from(file.buffer).pipe(stream);
+    });
+  }
+
   buildActivityFolder(fieldName: string, year: number, crewName: string, week: number): string {
     const s = (v: string) => v.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^\w]/g, '');
     return `${s(fieldName)}/${year}/actividades/${s(crewName)}/week_${week}`;

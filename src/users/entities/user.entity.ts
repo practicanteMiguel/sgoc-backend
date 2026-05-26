@@ -37,6 +37,9 @@ export class User {
   @Column({ nullable: true, type: 'uuid', name: 'field_id' })
   field_id!: string | null;
 
+  @Column({ nullable: true, type: 'text' })
+  firma_url!: string | null;
+
   @Column({ default: true })
   is_active!: boolean;
 

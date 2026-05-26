@@ -10,6 +10,7 @@ import { UserRole } from '../roles/entities/user-role.entity';
 import { Role } from '../roles/entities/role.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { MailService } from '../mail/mail.service';
+import { CloudinaryService } from '../plants/activities/cloudinary/cloudinary.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -24,6 +25,7 @@ export class UsersService {
     @InjectRepository(Role)     private roleRepo: Repository<Role>,
     @InjectRepository(Field)    private fieldRepo: Repository<Field>,
     private readonly mailService: MailService,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   async findAll(page = 1, limit = 20) {
@@ -218,6 +220,26 @@ export class UsersService {
 
   async updateLastLogin(id: string) {
     await this.userRepo.update(id, { last_login_at: new Date() });
+  }
+
+  async uploadFirma(userId: string, file: Express.Multer.File): Promise<{ firma_url: string }> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    const slug = `${user.first_name}_${user.last_name}`
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^\w]/g, '');
+
+    const firma_url = await this.cloudinary.uploadAndReplace(file, 'firmas', slug);
+    await this.userRepo.update(userId, { firma_url });
+    return { firma_url };
+  }
+
+  async getFirma(userId: string): Promise<{ firma_url: string | null }> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    return { firma_url: user.firma_url ?? null };
   }
 
   private generateTempPassword(): string {

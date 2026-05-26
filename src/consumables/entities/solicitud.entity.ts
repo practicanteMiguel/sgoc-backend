@@ -55,6 +55,9 @@ export class Solicitud {
   @Column({ type: 'enum', enum: EstadoSolicitud, default: EstadoSolicitud.PENDIENTE })
   estado!: EstadoSolicitud;
 
+  @Column({ type: 'text', nullable: true })
+  firma_supervisor_url!: string | null;
+
   @OneToMany(() => SolicitudItem, item => item.solicitud, { cascade: true })
   items!: SolicitudItem[];
 

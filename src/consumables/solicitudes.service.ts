@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 import { Solicitud, EstadoSolicitud } from './entities/solicitud.entity';
 import { SolicitudItem } from './entities/solicitud-item.entity';
 import { SolicitudAdicional } from './entities/solicitud-adicional.entity';
@@ -41,6 +42,7 @@ export class SolicitudesService {
     @InjectRepository(RequisicionItemAdicional) private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
     @InjectRepository(Field)      private fieldRepo:      Repository<Field>,
     @InjectRepository(FieldLugar) private fieldLugarRepo:  Repository<FieldLugar>,
+    @InjectRepository(User)       private userRepo:        Repository<User>,
     private notificationsService: NotificationsService,
   ) {}
 
@@ -109,6 +111,8 @@ export class SolicitudesService {
       fecha: s.fecha,
       nombre_solicitante: s.nombre_solicitante,
       presupuesto: presupuestoDe(s),
+      firmado_supervisor: !!s.firma_supervisor_url,
+      firma_supervisor_url: s.firma_supervisor_url,
       created_at: s.created_at,
     }));
   }
@@ -213,6 +217,8 @@ export class SolicitudesService {
       nombre_solicitante: s.nombre_solicitante,
       numero_contrato: s.numero_contrato,
       estado: s.estado,
+      firmado_supervisor: !!s.firma_supervisor_url,
+      firma_supervisor_url: s.firma_supervisor_url,
       presupuesto,
       excede_presupuesto: presupuesto !== null ? total_general > presupuesto : null,
       total_general,
@@ -222,15 +228,19 @@ export class SolicitudesService {
     };
   }
 
-  async llenado(id: string, dto: LlenadoSolicitudDto) {
+  async llenado(id: string, dto: LlenadoSolicitudDto, userId: string) {
     const s = await this.solicitudRepo.findOne({ where: { id } });
     if (!s) throw new NotFoundException('Solicitud no encontrada');
+
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user?.firma_url) throw new BadRequestException('Debes subir tu firma antes de enviar la solicitud');
 
     Object.assign(s, {
       fecha: dto.fecha,
       nombre_solicitante: dto.nombre_solicitante,
       numero_contrato: dto.numero_contrato,
       estado: EstadoSolicitud.COMPLETADA,
+      firma_supervisor_url: user.firma_url,
     });
     await this.solicitudRepo.save(s);
 
@@ -287,6 +297,10 @@ export class SolicitudesService {
       categoria: rq.categoria,
       estado: rq.estado,
       lugar: rq.lugar,
+      firmado_supervisor: !!rq.firma_supervisor_url,
+      firmado_encargado: !!rq.firma_encargado_url,
+      firma_supervisor_url: rq.firma_supervisor_url,
+      firma_encargado_url: rq.firma_encargado_url,
       created_at: rq.created_at,
     }));
   }
@@ -380,7 +394,10 @@ export class SolicitudesService {
     return this.findOne(solicitud.id);
   }
 
-  async generarRqs(dto: GenerarRqsDto) {
+  async generarRqs(dto: GenerarRqsDto, userId: string) {
+    const encargado = await this.userRepo.findOne({ where: { id: userId } });
+    if (!encargado?.firma_url) throw new BadRequestException('Debes subir tu firma antes de generar las RQs');
+
     const s = await this.solicitudRepo.findOne({
       where: { id: dto.solicitud_id },
       relations: ['items', 'items.insumo'],
@@ -457,6 +474,8 @@ export class SolicitudesService {
           nombre_solicitante: s.nombre_solicitante,
           numero_contrato: s.numero_contrato,
           estado: EstadoRequisicion.APROBADA,
+          firma_supervisor_url: s.firma_supervisor_url,
+          firma_encargado_url: encargado.firma_url,
         }),
       );
 
