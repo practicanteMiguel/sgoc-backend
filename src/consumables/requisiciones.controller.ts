@@ -1,7 +1,9 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseIntPipe,
+  Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseIntPipe, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequisicionesService } from './requisiciones.service';
 import {
   CreateRequisicionDto,
@@ -10,6 +12,7 @@ import {
   CreateRequisicionMasivoDto,
   UpdateEstadoDto,
   UpdateFacturasDto,
+  RecepcionDto,
 } from './dto/create-requisicion.dto';
 
 @ApiTags('Requisiciones')
@@ -79,6 +82,17 @@ export class RequisicionesController {
   @ApiOperation({ summary: 'Encargado registra numero de factura y precio real por item' })
   updateFacturas(@Param('id') id: string, @Body() dto: UpdateFacturasDto) {
     return this.service.updateFacturas(id, dto);
+  }
+
+  @Patch(':id/recepcion')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Supervisor confirma recepcion: registra cantidades recibidas por item, fecha de entrega y firma. Cambia estado a ENTREGADO.' })
+  confirmarRecepcion(
+    @Param('id') id: string,
+    @Body() dto: RecepcionDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.service.confirmarRecepcion(id, dto, userId);
   }
 
   @Delete(':id')

@@ -49,6 +49,15 @@ export class Requisicion {
   @Column({ type: 'text', nullable: true })
   firma_encargado_url!: string | null;
 
+  @Column({ type: 'date', nullable: true })
+  fecha_entrega!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  firma_recepcion_url!: string | null;
+
+  @Column({ default: false })
+  recepcion_completada!: boolean;
+
   @Column({ type: 'uuid', nullable: true })
   field_id!: string | null;
 

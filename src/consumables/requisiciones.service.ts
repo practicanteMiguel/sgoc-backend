@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
 import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
@@ -15,6 +16,7 @@ import {
   CreateRequisicionMasivoDto,
   UpdateEstadoDto,
   UpdateFacturasDto,
+  RecepcionDto,
 } from './dto/create-requisicion.dto';
 
 const MESES = [
@@ -30,6 +32,7 @@ export class RequisicionesService {
     @InjectRepository(RequisicionItemAdicional) private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
     @InjectRepository(Insumo) private insumoRepo: Repository<Insumo>,
     @InjectRepository(Field) private fieldRepo: Repository<Field>,
+    @InjectRepository(User) private userRepo: Repository<User>,
     private notificationsService: NotificationsService,
   ) {}
 
@@ -258,6 +261,7 @@ export class RequisicionesService {
       proveedor_ordinario: item.insumo.proveedor_ordinario,
       proveedor_extraordinario: item.insumo.proveedor_extraordinario,
       solicitado: item.solicitado,
+      recibido: item.recibido,
       numero_factura: item.numero_factura,
       precio_real: item.precio_real,
       proveedor_factura: item.proveedor_factura,
@@ -278,6 +282,7 @@ export class RequisicionesService {
       proveedor_ordinario: a.proveedor,
       proveedor_extraordinario: null as string | null,
       solicitado: a.solicitado,
+      recibido: a.recibido,
       numero_factura: a.numero_factura,
       precio_real: a.precio_real,
       proveedor_factura: a.proveedor_factura,
@@ -291,6 +296,13 @@ export class RequisicionesService {
     const total_general = allItems.reduce(
       (sum, i) => (i.total !== null ? sum + i.total : sum),
       0,
+    );
+
+    const total_solicitado = allItems.reduce(
+      (sum, i) => (i.solicitado !== null ? sum + Number(i.solicitado) : sum), 0,
+    );
+    const total_recibido = allItems.reduce(
+      (sum, i) => (i.recibido !== null ? sum + Number(i.recibido) : sum), 0,
     );
 
     return {
@@ -308,7 +320,13 @@ export class RequisicionesService {
       firmado_encargado: !!rq.firma_encargado_url,
       firma_supervisor_url: rq.firma_supervisor_url,
       firma_encargado_url: rq.firma_encargado_url,
+      recepcion_completada: rq.recepcion_completada,
+      fecha_entrega: rq.fecha_entrega,
+      firma_recepcion_url: rq.firma_recepcion_url,
       total_general,
+      total_solicitado,
+      total_recibido,
+      entrega_completa: rq.recepcion_completada ? total_solicitado === total_recibido : null,
       items: allItems,
       created_at: rq.created_at,
       updated_at: rq.updated_at,
@@ -369,6 +387,35 @@ export class RequisicionesService {
         await this.itemRepo.update(itemDto.id, patch);
       }
     }
+
+    return this.findOne(id);
+  }
+
+  async confirmarRecepcion(id: string, dto: RecepcionDto, userId: string) {
+    const rq = await this.rqRepo.findOne({ where: { id } });
+    if (!rq) throw new NotFoundException('Requisicion no encontrada');
+    if (rq.recepcion_completada) throw new BadRequestException('La recepcion ya fue confirmada');
+
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user?.firma_url) throw new BadRequestException('Debes subir tu firma antes de confirmar la recepcion');
+
+    const adicionales = await this.rqAdicionalRepo.find({ where: { requisicion_id: id } });
+    const adicionalIds = new Set(adicionales.map(a => a.id));
+
+    for (const itemDto of dto.items) {
+      if (itemDto.es_adicional || adicionalIds.has(itemDto.id)) {
+        await this.rqAdicionalRepo.update(itemDto.id, { recibido: itemDto.recibido });
+      } else {
+        await this.itemRepo.update(itemDto.id, { recibido: itemDto.recibido });
+      }
+    }
+
+    await this.rqRepo.update(id, {
+      fecha_entrega: dto.fecha_entrega,
+      firma_recepcion_url: user.firma_url,
+      recepcion_completada: true,
+      estado: EstadoRequisicion.ENTREGADO,
+    });
 
     return this.findOne(id);
   }

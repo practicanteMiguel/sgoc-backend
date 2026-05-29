@@ -99,6 +99,32 @@ export class UpdateFacturasDto {
   items!: ItemFacturaDto[];
 }
 
+export class ItemRecepcionDto {
+  @ApiProperty()
+  @IsUUID()
+  id!: string;
+
+  @ApiProperty()
+  @IsNumber()
+  recibido!: number;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsBoolean()
+  es_adicional?: boolean;
+}
+
+export class RecepcionDto {
+  @ApiProperty({ example: '2026-05-26' })
+  @IsString() @IsNotEmpty()
+  fecha_entrega!: string;
+
+  @ApiProperty({ type: [ItemRecepcionDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemRecepcionDto)
+  items!: ItemRecepcionDto[];
+}
+
 export class LlenadoSupervisorDto {
   @ApiProperty()
   @IsString() @IsNotEmpty()

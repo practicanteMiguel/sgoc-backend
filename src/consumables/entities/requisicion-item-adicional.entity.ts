@@ -35,6 +35,9 @@ export class RequisicionItemAdicional {
   @Column({ type: 'numeric', precision: 14, scale: 2, nullable: true })
   solicitado!: number | null;
 
+  @Column({ type: 'numeric', precision: 14, scale: 2, nullable: true })
+  recibido!: number | null;
+
   @Column({ type: 'varchar', nullable: true })
   numero_factura!: string | null;
 
