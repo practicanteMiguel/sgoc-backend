@@ -64,6 +64,12 @@ export class DotacionesController {
     return this.service.getByToken(token);
   }
 
+  @Get('spaces/:token/empleados')
+  @ApiOperation({ summary: 'Listar empleados activos del campo asociado al token (sin autenticacion)' })
+  getEmpleados(@Param('token') token: string) {
+    return this.service.getEmpleadosByToken(token);
+  }
+
   @Get('spaces/:token/solicitudes')
   @ApiOperation({ summary: 'Listar solicitudes del espacio' })
   getSolicitudes(@Param('token') token: string) {

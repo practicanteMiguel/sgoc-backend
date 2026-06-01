@@ -132,6 +132,20 @@ export class DotacionesService {
     return { ...solicitud, reposiciones: reposicionesResult };
   }
 
+  async getEmpleadosByToken(token: string) {
+    const space = await this.spaceRepo.findOne({
+      where: { vault_token: token },
+      relations: ['field'],
+    });
+    if (!space) throw new NotFoundException('Enlace no valido');
+
+    return this.employeeRepo.find({
+      where: { field: { id: space.field.id }, is_active: true },
+      select: ['id', 'first_name', 'last_name', 'position', 'identification_number'],
+      order: { first_name: 'ASC' },
+    });
+  }
+
   async getSolicitudes(token: string) {
     const space = await this.spaceRepo.findOne({ where: { vault_token: token } });
     if (!space) throw new NotFoundException('Enlace no valido');
