@@ -11,7 +11,7 @@ import { Employee } from '../employees/entities/employee.entity';
 import { Field } from '../fields/entities/field.entity';
 import { User } from '../../users/entities/user.entity';
 import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
-import { CreateSolicitudDotacionDto, UpdateEstadoDto } from './dto/create-solicitud.dto';
+import { CreateSolicitudDotacionDto, UpdateEstadoDto, FirmaAutorizadorDto } from './dto/create-solicitud.dto';
 import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
 
 function sanitize(v: string) {
@@ -174,6 +174,36 @@ export class DotacionesService {
     if (!solicitud) throw new NotFoundException('Solicitud no encontrada');
 
     solicitud.estado = dto.estado;
+    return this.solicitudRepo.save(solicitud);
+  }
+
+  async firmarHse(id: string, file: Express.Multer.File) {
+    const solicitud = await this.solicitudRepo.findOne({
+      where: { id },
+      relations: ['campo'],
+    });
+    if (!solicitud) throw new NotFoundException('Solicitud no encontrada');
+
+    const folder = `dotaciones/${sanitize(solicitud.campo.name)}/firmas`;
+    const { url } = await this.cloudinary.uploadFull(file, folder);
+
+    solicitud.firma_hse_url = url;
+    return this.solicitudRepo.save(solicitud);
+  }
+
+  async firmarAutorizador(id: string, file: Express.Multer.File, dto: FirmaAutorizadorDto) {
+    const solicitud = await this.solicitudRepo.findOne({
+      where: { id },
+      relations: ['campo'],
+    });
+    if (!solicitud) throw new NotFoundException('Solicitud no encontrada');
+
+    const folder = `dotaciones/${sanitize(solicitud.campo.name)}/firmas`;
+    const { url } = await this.cloudinary.uploadFull(file, folder);
+
+    solicitud.firma_autorizador_url  = url;
+    solicitud.nombre_autorizador     = dto.nombre_autorizador;
+    solicitud.cargo_autorizador      = dto.cargo_autorizador;
     return this.solicitudRepo.save(solicitud);
   }
 }

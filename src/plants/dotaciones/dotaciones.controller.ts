@@ -1,9 +1,9 @@
 import {
   Controller, Get, Post, Patch, Param, Body, Query,
-  UseGuards, UseInterceptors, UploadedFiles,
+  UseGuards, UseInterceptors, UploadedFiles, UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -11,7 +11,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { DotacionesService } from './dotaciones.service';
-import { CreateSolicitudMultipartDto, CreateReposicionDto, UpdateEstadoDto } from './dto/create-solicitud.dto';
+import { CreateSolicitudMultipartDto, CreateReposicionDto, UpdateEstadoDto, FirmaAutorizadorDto } from './dto/create-solicitud.dto';
 import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
 
 @ApiTags('Dotaciones')
@@ -54,6 +54,35 @@ export class DotacionesController {
   @ApiOperation({ summary: 'Cambiar estado de una solicitud (emitida -> autorizada -> generada -> entregada)' })
   updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDto) {
     return this.service.updateEstado(id, dto);
+  }
+
+  @Patch('solicitudes/:id/firma-hse')
+  @ApiOperation({
+    summary: 'Guardar firma del HSE. Multipart con campo "firma" (imagen). Nombre y cargo se toman de la solicitud.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('firma'))
+  firmarHse(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Se requiere la imagen de la firma');
+    return this.service.firmarHse(id, file);
+  }
+
+  @Patch('solicitudes/:id/firma-autorizador')
+  @ApiOperation({
+    summary: 'Guardar firma del autorizador. Multipart con campo "firma" (imagen) + nombre_autorizador + cargo_autorizador.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('firma'))
+  firmarAutorizador(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: FirmaAutorizadorDto,
+  ) {
+    if (!file) throw new BadRequestException('Se requiere la imagen de la firma');
+    return this.service.firmarAutorizador(id, file, dto);
   }
 
   // --- Publicos (token) ---

@@ -8,6 +8,16 @@ export class UpdateEstadoDto {
   estado!: EstadoSolicitudDotacion;
 }
 
+export class FirmaAutorizadorDto {
+  @ApiProperty()
+  @IsString()
+  nombre_autorizador!: string;
+
+  @ApiProperty()
+  @IsString()
+  cargo_autorizador!: string;
+}
+
 export class CreateReposicionDto {
   @IsUUID()
   empleado_id!: string;

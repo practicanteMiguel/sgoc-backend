@@ -46,6 +46,18 @@ export class SolicitudDotacion {
   })
   estado!: EstadoSolicitudDotacion;
 
+  @Column({ nullable: true, type: 'text' })
+  firma_hse_url!: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  firma_autorizador_url!: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  nombre_autorizador!: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  cargo_autorizador!: string | null;
+
   @OneToMany(() => ReposicionDotacion, (r) => r.solicitud, { cascade: true })
   reposiciones!: ReposicionDotacion[];
 
