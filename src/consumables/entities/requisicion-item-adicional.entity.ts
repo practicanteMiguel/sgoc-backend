@@ -20,6 +20,12 @@ export class RequisicionItemAdicional {
   @Column({ type: 'enum', enum: CategoriaInsumo })
   categoria!: CategoriaInsumo;
 
+  @Column({ type: 'varchar', nullable: true })
+  codigo!: string | null;
+
+  @Column({ type: 'varchar', nullable: true, enum: ['ORDINARIA', 'EXTRAORDINARIA'] })
+  tipo_requisicion!: 'ORDINARIA' | 'EXTRAORDINARIA' | null;
+
   @Column({ type: 'varchar' })
   descripcion!: string;
 

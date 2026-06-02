@@ -64,6 +64,9 @@ export class Requisicion {
   @Column({ type: 'uuid', nullable: true })
   solicitud_id!: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  observaciones!: string | null;
+
   @OneToMany(() => RequisicionItem, item => item.requisicion, { cascade: true })
   items!: RequisicionItem[];
 

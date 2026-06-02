@@ -1,5 +1,6 @@
-import { IsDateString, IsString, IsUUID, IsOptional, IsEnum } from 'class-validator';
+import { IsDateString, IsString, IsUUID, IsOptional, IsEnum, IsNumber, IsArray, ValidateNested, ArrayMinSize } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { EstadoSolicitudDotacion } from '../entities/solicitud-dotacion.entity';
 
 export class UpdateEstadoDto {
@@ -16,6 +17,50 @@ export class FirmaAutorizadorDto {
   @ApiProperty()
   @IsString()
   cargo_autorizador!: string;
+}
+
+export class ItemRqDotacionDto {
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  codigo?: string;
+
+  @ApiProperty()
+  @IsString()
+  descripcion!: string;
+
+  @ApiProperty()
+  @IsString()
+  unidad!: string;
+
+  @ApiProperty({ enum: ['ORDINARIA', 'EXTRAORDINARIA'] })
+  @IsEnum(['ORDINARIA', 'EXTRAORDINARIA'])
+  tipo_requisicion!: 'ORDINARIA' | 'EXTRAORDINARIA';
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  valor_unitario?: number;
+
+  @ApiProperty()
+  solicitado!: number;
+}
+
+export class CreateRqDesdeDotacionDto {
+  @ApiProperty()
+  @IsNumber()
+  numero_rq!: number;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  observaciones?: string;
+
+  @ApiProperty({ type: [ItemRqDotacionDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => ItemRqDotacionDto)
+  items!: ItemRqDotacionDto[];
 }
 
 export class CreateReposicionDto {

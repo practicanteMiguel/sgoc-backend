@@ -11,7 +11,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { DotacionesService } from './dotaciones.service';
-import { CreateSolicitudMultipartDto, CreateReposicionDto, UpdateEstadoDto, FirmaAutorizadorDto } from './dto/create-solicitud.dto';
+import { CreateSolicitudMultipartDto, CreateReposicionDto, UpdateEstadoDto, FirmaAutorizadorDto, CreateRqDesdeDotacionDto } from './dto/create-solicitud.dto';
 import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
 
 @ApiTags('Dotaciones')
@@ -54,6 +54,14 @@ export class DotacionesController {
   @ApiOperation({ summary: 'Cambiar estado de una solicitud (emitida -> autorizada -> generada -> entregada)' })
   updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDto) {
     return this.service.updateEstado(id, dto);
+  }
+
+  @Post('solicitudes/:id/rq')
+  @ApiOperation({
+    summary: 'Generar RQ desde una solicitud autorizada. La solicitud pasa a estado "generada".',
+  })
+  generarRq(@Param('id') id: string, @Body() dto: CreateRqDesdeDotacionDto) {
+    return this.service.generarRq(id, dto);
   }
 
   @Patch('solicitudes/:id/firma-hse')

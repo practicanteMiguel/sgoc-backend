@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
+  Injectable, NotFoundException, BadRequestException, ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,8 +11,11 @@ import { Employee } from '../employees/entities/employee.entity';
 import { Field } from '../fields/entities/field.entity';
 import { User } from '../../users/entities/user.entity';
 import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
-import { CreateSolicitudDotacionDto, UpdateEstadoDto, FirmaAutorizadorDto } from './dto/create-solicitud.dto';
+import { CreateSolicitudDotacionDto, UpdateEstadoDto, FirmaAutorizadorDto, CreateRqDesdeDotacionDto } from './dto/create-solicitud.dto';
 import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
+import { Requisicion } from '../../consumables/entities/requisicion.entity';
+import { RequisicionItemAdicional } from '../../consumables/entities/requisicion-item-adicional.entity';
+import { CategoriaInsumo } from '../../consumables/entities/insumo.entity';
 
 function sanitize(v: string) {
   return v.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^\w]/g, '');
@@ -26,7 +29,9 @@ export class DotacionesService {
     @InjectRepository(ReposicionDotacion) private reposicionRepo: Repository<ReposicionDotacion>,
     @InjectRepository(DotacionImagen)     private imagenRepo:     Repository<DotacionImagen>,
     @InjectRepository(Employee)           private employeeRepo:   Repository<Employee>,
-    @InjectRepository(Field)              private fieldRepo:      Repository<Field>,
+    @InjectRepository(Field)              private fieldRepo:          Repository<Field>,
+    @InjectRepository(Requisicion)        private rqRepo:             Repository<Requisicion>,
+    @InjectRepository(RequisicionItemAdicional) private rqItemRepo:   Repository<RequisicionItemAdicional>,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -175,6 +180,60 @@ export class DotacionesService {
 
     solicitud.estado = dto.estado;
     return this.solicitudRepo.save(solicitud);
+  }
+
+  async generarRq(solicitudId: string, dto: CreateRqDesdeDotacionDto) {
+    const solicitud = await this.solicitudRepo.findOne({
+      where: { id: solicitudId },
+      relations: ['campo'],
+    });
+    if (!solicitud) throw new NotFoundException('Solicitud no encontrada');
+    if (solicitud.estado !== EstadoSolicitudDotacion.AUTORIZADA) {
+      throw new BadRequestException('La solicitud debe estar autorizada para generar una RQ');
+    }
+
+    const conflicto = await this.rqRepo.findOne({ where: { numero_rq: dto.numero_rq } });
+    if (conflicto) {
+      throw new ConflictException({
+        message:      `El número de RQ ${dto.numero_rq} ya está en uso`,
+        rq_conflicto: { id: conflicto.id, numero_rq: conflicto.numero_rq },
+      });
+    }
+
+    const rq = await this.rqRepo.save(
+      this.rqRepo.create({
+        numero_rq:    dto.numero_rq,
+        categoria:    CategoriaInsumo.DOTACION,
+        lugar:        solicitud.campo.name,
+        field_id:     solicitud.campo.id,
+        solicitud_id: solicitud.id,
+        observaciones: dto.observaciones ?? null,
+        lote:         45,
+      }),
+    );
+
+    const items: RequisicionItemAdicional[] = [];
+    for (const item of dto.items) {
+      items.push(
+        await this.rqItemRepo.save(
+          this.rqItemRepo.create({
+            requisicion_id:   rq.id,
+            categoria:        CategoriaInsumo.DOTACION,
+            codigo:           item.codigo ?? null,
+            descripcion:      item.descripcion,
+            unidad:           item.unidad,
+            tipo_requisicion: item.tipo_requisicion,
+            valor_unitario:   item.valor_unitario ?? null,
+            solicitado:       item.solicitado,
+          }),
+        ),
+      );
+    }
+
+    solicitud.estado = EstadoSolicitudDotacion.GENERADA;
+    await this.solicitudRepo.save(solicitud);
+
+    return { ...rq, items };
   }
 
   async firmarHse(id: string, file: Express.Multer.File) {

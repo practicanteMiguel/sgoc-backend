@@ -7,6 +7,7 @@ export enum CategoriaInsumo {
   PAPELERIA  = 'PAPELERIA',
   CONSUMIBLE = 'CONSUMIBLE',
   EPP        = 'EPP',
+  DOTACION   = 'DOTACION',
 }
 
 @Entity('insumos')

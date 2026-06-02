@@ -15,6 +15,7 @@ const PREFIJO: Record<CategoriaInsumo, string> = {
   [CategoriaInsumo.PAPELERIA]:  'PAP',
   [CategoriaInsumo.CONSUMIBLE]: 'CON',
   [CategoriaInsumo.EPP]:        'EPP',
+  [CategoriaInsumo.DOTACION]:   'DOT',
 };
 
 const MESES = [

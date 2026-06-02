@@ -6,6 +6,8 @@ import { ReposicionDotacion } from './entities/reposicion-dotacion.entity';
 import { DotacionImagen } from './entities/dotacion-imagen.entity';
 import { Employee } from '../employees/entities/employee.entity';
 import { Field } from '../fields/entities/field.entity';
+import { Requisicion } from '../../consumables/entities/requisicion.entity';
+import { RequisicionItemAdicional } from '../../consumables/entities/requisicion-item-adicional.entity';
 import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
 import { DotacionesService } from './dotaciones.service';
 import { DotacionesController } from './dotaciones.controller';
@@ -19,6 +21,8 @@ import { DotacionesController } from './dotaciones.controller';
       DotacionImagen,
       Employee,
       Field,
+      Requisicion,
+      RequisicionItemAdicional,
     ]),
   ],
   controllers: [DotacionesController],

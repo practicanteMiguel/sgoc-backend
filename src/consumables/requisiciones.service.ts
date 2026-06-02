@@ -39,7 +39,10 @@ export class RequisicionesService {
   private async assertNumeroUnico(numero: number) {
     const existe = await this.rqRepo.findOne({ where: { numero_rq: numero } });
     if (existe) {
-      throw new ConflictException(`El número de RQ ${numero} ya fue usado en otra requisición`);
+      throw new ConflictException({
+        message:      `El número de RQ ${numero} ya está en uso`,
+        rq_conflicto: { id: existe.id, numero_rq: existe.numero_rq },
+      });
     }
   }
 
