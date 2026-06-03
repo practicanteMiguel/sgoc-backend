@@ -38,10 +38,12 @@ export class ItemRqDotacionDto {
   tipo_requisicion!: 'ORDINARIA' | 'EXTRAORDINARIA';
 
   @ApiProperty({ required: false })
+  @IsNumber()
   @IsOptional()
   valor_unitario?: number;
 
   @ApiProperty()
+  @IsNumber()
   solicitado!: number;
 }
 
