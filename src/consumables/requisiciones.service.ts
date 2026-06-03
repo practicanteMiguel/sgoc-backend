@@ -5,7 +5,7 @@ import { User } from '../users/entities/user.entity';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
 import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
-import { Insumo } from './entities/insumo.entity';
+import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
@@ -136,8 +136,9 @@ export class RequisicionesService {
       qb.leftJoin('solicitudes', 's', 's.id = r.solicitud_id')
         .where(
           '(r.solicitud_id IS NOT NULL AND s.mes = :mes AND s.anio = :anio) OR ' +
-          '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio)',
-          { mes, anio },
+          '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio) OR ' +
+          '(r.categoria = :catDot AND EXTRACT(MONTH FROM COALESCE(r.fecha, r.created_at::date)) = :mes AND EXTRACT(YEAR FROM COALESCE(r.fecha, r.created_at::date)) = :anio)',
+          { mes, anio, catDot: CategoriaInsumo.DOTACION },
         );
     }
 
@@ -153,8 +154,9 @@ export class RequisicionesService {
       .leftJoin('solicitudes', 's', 's.id = r.solicitud_id')
       .where(
         '(r.solicitud_id IS NOT NULL AND s.mes = :mes AND s.anio = :anio) OR ' +
-        '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio)',
-        { mes, anio },
+        '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio) OR ' +
+        '(r.categoria = :catDot AND EXTRACT(MONTH FROM COALESCE(r.fecha, r.created_at::date)) = :mes AND EXTRACT(YEAR FROM COALESCE(r.fecha, r.created_at::date)) = :anio)',
+        { mes, anio, catDot: CategoriaInsumo.DOTACION },
       )
       .orderBy('r.lugar', 'ASC')
       .addOrderBy('r.categoria', 'ASC')
