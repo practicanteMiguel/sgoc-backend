@@ -57,6 +57,26 @@ export class CreateRqDesdeDotacionDto {
   @IsOptional()
   observaciones?: string;
 
+  @ApiProperty({ required: false })
+  @IsDateString()
+  @IsOptional()
+  fecha?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  nombre_solicitante?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  numero_contrato?: string;
+
+  // El front puede enviar este campo pero el estado siempre lo controla el backend
+  @IsString()
+  @IsOptional()
+  estado?: string;
+
   @ApiProperty({ type: [ItemRqDotacionDto] })
   @IsArray()
   @ArrayMinSize(1)

@@ -13,7 +13,7 @@ import { User } from '../../users/entities/user.entity';
 import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
 import { CreateSolicitudDotacionDto, UpdateEstadoDto, FirmaAutorizadorDto, CreateRqDesdeDotacionDto } from './dto/create-solicitud.dto';
 import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
-import { Requisicion } from '../../consumables/entities/requisicion.entity';
+import { Requisicion, EstadoRequisicion } from '../../consumables/entities/requisicion.entity';
 import { RequisicionItemAdicional } from '../../consumables/entities/requisicion-item-adicional.entity';
 import { CategoriaInsumo } from '../../consumables/entities/insumo.entity';
 
@@ -202,13 +202,17 @@ export class DotacionesService {
 
     const rq = await this.rqRepo.save(
       this.rqRepo.create({
-        numero_rq:    dto.numero_rq,
-        categoria:    CategoriaInsumo.DOTACION,
-        lugar:        solicitud.campo.name,
-        field_id:     solicitud.campo.id,
-        solicitud_id: solicitud.id,
-        observaciones: dto.observaciones ?? null,
-        lote:         45,
+        numero_rq:          dto.numero_rq,
+        categoria:          CategoriaInsumo.DOTACION,
+        lugar:              solicitud.campo.name,
+        field_id:           solicitud.campo.id,
+        solicitud_id:       solicitud.id,
+        observaciones:      dto.observaciones      ?? null,
+        fecha:              dto.fecha              ?? null,
+        nombre_solicitante: dto.nombre_solicitante ?? null,
+        numero_contrato:    dto.numero_contrato    ?? null,
+        estado:             EstadoRequisicion.APROBADA,
+        lote:               45,
       }),
     );
 
