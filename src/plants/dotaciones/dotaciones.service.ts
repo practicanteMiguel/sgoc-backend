@@ -11,7 +11,7 @@ import { Employee } from '../employees/entities/employee.entity';
 import { Field } from '../fields/entities/field.entity';
 import { User } from '../../users/entities/user.entity';
 import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
-import { CreateSolicitudDotacionDto, UpdateEstadoDto, FirmaAutorizadorDto, CreateRqDesdeDotacionDto } from './dto/create-solicitud.dto';
+import { CreateSolicitudDotacionDto, UpdateEstadoDotacionDto, FirmaAutorizadorDto, CreateRqDesdeDotacionDto } from './dto/create-solicitud.dto';
 import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
 import { Requisicion, EstadoRequisicion } from '../../consumables/entities/requisicion.entity';
 import { RequisicionItemAdicional } from '../../consumables/entities/requisicion-item-adicional.entity';
@@ -174,7 +174,7 @@ export class DotacionesService {
     });
   }
 
-  async updateEstado(id: string, dto: UpdateEstadoDto) {
+  async updateEstado(id: string, dto: UpdateEstadoDotacionDto) {
     const solicitud = await this.solicitudRepo.findOne({ where: { id } });
     if (!solicitud) throw new NotFoundException('Solicitud no encontrada');
 

@@ -11,7 +11,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { DotacionesService } from './dotaciones.service';
-import { CreateSolicitudMultipartDto, CreateReposicionDto, UpdateEstadoDto, FirmaAutorizadorDto, CreateRqDesdeDotacionDto } from './dto/create-solicitud.dto';
+import { CreateSolicitudMultipartDto, CreateReposicionDto, UpdateEstadoDotacionDto, FirmaAutorizadorDto, CreateRqDesdeDotacionDto } from './dto/create-solicitud.dto';
 import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
 
 @ApiTags('Dotaciones')
@@ -52,7 +52,7 @@ export class DotacionesController {
 
   @Patch('solicitudes/:id/estado')
   @ApiOperation({ summary: 'Cambiar estado de una solicitud (emitida -> autorizada -> generada -> entregada)' })
-  updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDto) {
+  updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDotacionDto) {
     return this.service.updateEstado(id, dto);
   }
 

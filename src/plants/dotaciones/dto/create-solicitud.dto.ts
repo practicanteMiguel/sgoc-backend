@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { EstadoSolicitudDotacion } from '../entities/solicitud-dotacion.entity';
 
-export class UpdateEstadoDto {
+export class UpdateEstadoDotacionDto {
   @ApiProperty({ enum: EstadoSolicitudDotacion })
   @IsEnum(EstadoSolicitudDotacion)
   estado!: EstadoSolicitudDotacion;
