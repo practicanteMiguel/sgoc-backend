@@ -20,7 +20,7 @@ dotenv.config();
 const dataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   entities: ['src/**/*.entity.ts'],
   synchronize: true,
 });
@@ -29,7 +29,7 @@ async function runSeeds() {
   await dataSource.initialize();
   console.log('🌱 Iniciando seeds...\n');
 
-  /*await seedRoles(dataSource);
+  await seedRoles(dataSource);
   await seedPermissions(dataSource);
   await seedModules(dataSource);
   await seedRolePermissions(dataSource);
@@ -40,7 +40,7 @@ async function runSeeds() {
   await seedEmployeesRioCeibas(dataSource);
   await seedEmployeesSanFrancisco(dataSource);
   await seedEmployeesTello(dataSource);
-  await seedEmployeesYaguara(dataSource);*/
+  await seedEmployeesYaguara(dataSource);
   await seedInsumos(dataSource);
 
   console.log('\n🎉 Seeds completados correctamente');

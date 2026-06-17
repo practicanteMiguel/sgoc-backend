@@ -67,4 +67,11 @@ export class ViaMonthlyLogService {
     if (!log) throw new NotFoundException('Registro mensual no encontrado');
     return { vault_token: log.vault_token };
   }
+
+  async remove(id: string) {
+    const log = await this.logRepo.findOne({ where: { id } });
+    if (!log) throw new NotFoundException('Registro mensual no encontrado');
+    await this.logRepo.remove(log);
+    return { message: 'Registro eliminado correctamente' };
+  }
 }

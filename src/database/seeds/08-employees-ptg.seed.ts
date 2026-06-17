@@ -3,7 +3,7 @@ import { Employee, ScheduleType } from '@/plants/employees/entities/employee.ent
 import { Field } from '@/plants/fields/entities/field.entity';
 
 
-const FIELD_ID = 'e3fa8561-922c-44fa-9df1-8e9f0c4a7f33';
+const FIELD_NAME = 'PLANTA DE GAS';
 
 const employeesData: Partial<
   Employee>[] = [
@@ -158,9 +158,9 @@ export async function seedEmployeesPlanDeGas(dataSource: DataSource): Promise<vo
   const employeeRepo = dataSource.getRepository(Employee);
   const fieldRepo = dataSource.getRepository(Field);
 
-  const field = await fieldRepo.findOneBy({ id: FIELD_ID });
+  const field = await fieldRepo.findOneBy({ name: FIELD_NAME });
   if (!field) {
-    throw new Error(`Field with id ${FIELD_ID} not found. Run field seed first.`);
+    throw new Error(`Field '${FIELD_NAME}' not found. Run field seed first.`);
   }
 
   let created = 0;

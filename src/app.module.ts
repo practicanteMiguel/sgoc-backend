@@ -31,7 +31,7 @@ import { ConsumablesModule } from './consumables/consumables.module';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         url: config.get('DATABASE_URL'),
-        ssl: { rejectUnauthorized: false },
+        ssl: config.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: config.get('NODE_ENV') === 'development',
         logging: false,

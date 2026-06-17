@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { Employee, ScheduleType } from '@/plants/employees/entities/employee.entity';
 import { Field } from '@/plants/fields/entities/field.entity';
 
-const FIELD_ID = '04c8e844-2e2d-4c38-8a2a-8d836a3d9e24';
+const FIELD_NAME = 'RIO CEIBAS';
 
 const employeesData: Partial<
   Employee>[] = [
@@ -224,9 +224,9 @@ export async function seedEmployeesRioCeibas(dataSource: DataSource): Promise<vo
   const employeeRepo = dataSource.getRepository(Employee);
   const fieldRepo = dataSource.getRepository(Field);
 
-  const field = await fieldRepo.findOneBy({ id: FIELD_ID });
+  const field = await fieldRepo.findOneBy({ name: FIELD_NAME });
   if (!field) {
-    throw new Error(`Field with id ${FIELD_ID} not found. Run field seed first.`);
+    throw new Error(`Field '${FIELD_NAME}' not found. Run field seed first.`);
   }
 
   let created = 0;

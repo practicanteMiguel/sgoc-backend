@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Param, Body, Query, UseGuards,
+  Controller, Get, Post, Delete, Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
@@ -47,5 +47,12 @@ export class ViaMonthlyLogController {
   @ApiOperation({ summary: 'Obtener token de bóveda para compartir con trabajadores' })
   getToken(@Param('id') id: string) {
     return this.service.getVaultToken(id);
+  }
+
+  @Delete(':id')
+  @Roles('supervisor', 'admin', 'coordinator')
+  @ApiOperation({ summary: 'Eliminar registro mensual de vías' })
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 }
