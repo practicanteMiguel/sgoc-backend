@@ -1,0 +1,2 @@
+// Placeholder eliminado — el app no tiene ruta raiz (usa prefijo api/v1).
+// Los tests reales estan en auth.e2e-spec.ts y los modulos siguientes.

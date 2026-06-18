@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { Session } from '../users/entities/session.entity';
 
@@ -41,9 +42,11 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email, roles };
 
     const accessToken = this.jwtService.sign(payload);
+    // jwtid garantiza que cada refresh token sea unico aunque se generen en el mismo segundo
     const refreshToken = this.jwtService.sign(payload, {
       secret:     this.config.get('JWT_REFRESH_SECRET'),
       expiresIn:  this.config.get('JWT_REFRESH_EXPIRES_IN'),
+      jwtid:      crypto.randomUUID(),
     });
 
     const expiresAt = new Date();
