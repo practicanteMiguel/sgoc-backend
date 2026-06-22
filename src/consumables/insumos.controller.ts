@@ -1,8 +1,12 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, Query,
-  ParseIntPipe,
+  ParseIntPipe, UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { InsumosService } from './insumos.service';
 import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto, BorradorInsumoDto } from './dto/create-insumo.dto';
 import { CategoriaInsumo } from './entities/insumo.entity';
@@ -13,6 +17,8 @@ export class InsumosController {
   constructor(private readonly service: InsumosService) {}
 
   @Post()
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Crear insumo. El codigo se genera automaticamente segun la categoria' })
   create(@Body() dto: CreateInsumoDto) {
     return this.service.create(dto);
@@ -52,6 +58,8 @@ export class InsumosController {
   }
 
   @Get('borradores')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Borradores pendientes de un periodo. Incluye datos del insumo para mostrar en pantalla' })
   @ApiQuery({ name: 'mes', type: Number, example: 5 })
   @ApiQuery({ name: 'anio', type: Number, example: 2026 })
@@ -69,24 +77,33 @@ export class InsumosController {
   }
 
   @Patch(':id/borrador')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Upsert de borrador por (insumo, mes, anio). Solo guarda los campos enviados' })
   upsertBorrador(@Param('id') id: string, @Body() dto: BorradorInsumoDto) {
     return this.service.upsertBorrador(id, dto);
   }
 
   @Patch(':id')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Actualizar valor unitario, proveedor o estado del insumo (aplicacion directa, sin borrador)' })
   update(@Param('id') id: string, @Body() dto: UpdateInsumoDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Eliminar insumo permanentemente' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
 
   @Post('cerrar-mes')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiOperation({ summary: 'Compras cierra el mes: notifica a los encargados de consumables que la lista esta lista para revisar' })
   cerrarMes(@Body() dto: CerrarMesDto) {
     return this.service.cerrarMes(dto);

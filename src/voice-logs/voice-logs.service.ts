@@ -92,8 +92,9 @@ export class VoiceLogsService {
     return this.repo.find({ where, order: { created_at: 'DESC' } });
   }
 
-  async findOne(id: string, userId: string): Promise<VoiceLog> {
-    const log = await this.repo.findOne({ where: { id, user_id: userId } });
+  async findOne(id: string, userId: string, isAdmin = false): Promise<VoiceLog> {
+    const where = isAdmin ? { id } : { id, user_id: userId };
+    const log = await this.repo.findOne({ where });
     if (!log) throw new NotFoundException('Registro de voz no encontrado');
     return log;
   }
@@ -102,14 +103,15 @@ export class VoiceLogsService {
     id: string,
     userId: string,
     transcription: string,
+    isAdmin = false,
   ): Promise<VoiceLog> {
-    const log = await this.findOne(id, userId);
+    const log = await this.findOne(id, userId, isAdmin);
     log.transcription = transcription;
     return this.repo.save(log) as Promise<VoiceLog>;
   }
 
-  async remove(id: string, userId: string): Promise<void> {
-    const log = await this.findOne(id, userId);
+  async remove(id: string, userId: string, isAdmin = false): Promise<void> {
+    const log = await this.findOne(id, userId, isAdmin);
     await this.repo.softDelete(log.id);
   }
 

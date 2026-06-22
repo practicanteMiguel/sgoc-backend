@@ -15,6 +15,8 @@ export class ModulesController {
   constructor(private readonly modulesService: ModulesService) {}
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @ApiOperation({ summary: 'Listar todos los módulos activos' })
   findAll() {
     return this.modulesService.findAll();

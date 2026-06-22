@@ -2,8 +2,9 @@ import {
   Controller, Post, Get, Body, Query,
   UseGuards, Req, HttpCode,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { IsString, IsNotEmpty } from 'class-validator';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -11,6 +12,13 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { UsersService } from '../users/users.service';
+
+class VerifyEmailDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  token!: string;
+}
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -56,10 +64,18 @@ export class AuthController {
     return user;
   }
 
-  // Endpoint público — el usuario llega desde el link del email
+  // Token en body — el frontend extrae el token de la URL y lo envía via POST
+  @Post('verify-email')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Verificar correo electrónico (token en body)' })
+  verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.usersService.verifyEmail(dto.token);
+  }
+
+  // Mantenido por compatibilidad con links de email anteriores — preferir POST
   @Get('verify-email')
-  @ApiOperation({ summary: 'Verificar correo electrónico via token' })
-  verifyEmail(@Query('token') token: string) {
+  @ApiOperation({ summary: 'Verificar correo electrónico via query param (deprecated)' })
+  verifyEmailGet(@Query('token') token: string) {
     return this.usersService.verifyEmail(token);
   }
 }

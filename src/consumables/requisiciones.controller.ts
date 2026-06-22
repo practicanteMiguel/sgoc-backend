@@ -1,8 +1,9 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseIntPipe, UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RequisicionesService } from './requisiciones.service';
 import {
@@ -21,12 +22,16 @@ export class RequisicionesController {
   constructor(private readonly service: RequisicionesService) {}
 
   @Post()
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Crear RQ individual. Genera automaticamente un item por cada insumo activo de la categoria' })
   create(@Body() dto: CreateRequisicionDto) {
     return this.service.create(dto);
   }
 
   @Post('masivo')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Encargado genera RQs para todas las plantas con supervisor. Notifica a cada supervisor automaticamente' })
   crearMasivo(@Body() dto: CreateRequisicionMasivoDto) {
     return this.service.crearMasivo(dto);
@@ -61,24 +66,32 @@ export class RequisicionesController {
   }
 
   @Patch(':id')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Actualizar cabecera de la RQ (numero_rq, lote, lugar)' })
   update(@Param('id') id: string, @Body() dto: UpdateRequisicionDto) {
     return this.service.update(id, dto);
   }
 
   @Patch(':id/llenado')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Supervisor llena fecha, nombre, contrato y cantidades solicitadas' })
   llenadoSupervisor(@Param('id') id: string, @Body() dto: LlenadoSupervisorDto) {
     return this.service.llenadoSupervisor(id, dto);
   }
 
   @Patch(':id/estado')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Compras avanza el estado de la RQ: PEDIDO_REALIZADO | EN_BODEGA | ENTREGADO' })
   updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDto) {
     return this.service.updateEstado(id, dto);
   }
 
   @Patch(':id/facturas')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Encargado registra numero de factura y precio real por item' })
   updateFacturas(@Param('id') id: string, @Body() dto: UpdateFacturasDto) {
     return this.service.updateFacturas(id, dto);
@@ -96,6 +109,8 @@ export class RequisicionesController {
   }
 
   @Delete(':id')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Eliminar RQ y todos sus items' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);

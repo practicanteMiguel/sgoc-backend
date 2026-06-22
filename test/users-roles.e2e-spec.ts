@@ -338,16 +338,12 @@ describe('Users & Roles (e2e)', () => {
       expect(res.body.position).toBe('tester-actualizado');
     });
 
-    it('[SEGURIDAD] cualquier usuario autenticado puede actualizar a otro usuario (sin restriccion de rol)', async () => {
-      // ADVERTENCIA: PATCH /users/:id no tiene @Roles() — cualquier usuario autenticado
-      // puede modificar datos de cualquier otro usuario. Evaluar agregar restriccion.
-      const res = await request(app.getHttpServer())
+    it('[SEGURIDAD] usuario sin rol no puede actualizar a otro usuario — requiere admin', async () => {
+      await request(app.getHttpServer())
         .patch(`/api/v1/users/${adminUser.id}`)
         .set('Authorization', `Bearer ${plainToken}`)
-        .send({ position: 'hacked' });
-
-      // Documentamos el comportamiento actual: devuelve 200 (vulnerabilidad)
-      expect(res.status).toBe(200);
+        .send({ position: 'hacked' })
+        .expect(403);
     });
 
     it('retorna 401 sin token', async () => {

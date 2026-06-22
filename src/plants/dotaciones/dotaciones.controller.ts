@@ -4,10 +4,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiHeader } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
+import { ApiKeyGuard } from '../../auth/guards/api-key.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { DotacionesService } from './dotaciones.service';
@@ -51,12 +52,17 @@ export class DotacionesController {
   }
 
   @Patch('solicitudes/:id/estado')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'coordinator')
   @ApiOperation({ summary: 'Cambiar estado de una solicitud (emitida -> autorizada -> generada -> entregada)' })
   updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDotacionDto) {
     return this.service.updateEstado(id, dto);
   }
 
   @Post('solicitudes/:id/rq')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({
     summary: 'Generar RQ desde una solicitud autorizada. La solicitud pasa a estado "generada".',
   })
@@ -65,6 +71,8 @@ export class DotacionesController {
   }
 
   @Patch('solicitudes/:id/firma-hse')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({
     summary: 'Guardar firma del HSE. Multipart con campo "firma" (imagen). Nombre y cargo se toman de la solicitud.',
   })
@@ -79,6 +87,8 @@ export class DotacionesController {
   }
 
   @Patch('solicitudes/:id/firma-autorizador')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({
     summary: 'Guardar firma del autorizador. Multipart con campo "firma" (imagen) + nombre_autorizador + cargo_autorizador.',
   })

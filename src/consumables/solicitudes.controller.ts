@@ -1,8 +1,9 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseIntPipe, UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SolicitudesService } from './solicitudes.service';
 import { CrearSolicitudesDto, LlenadoSolicitudDto, GenerarRqsDto, CrearAdicionalDto, UpdateAdicionalDto, CrearSolicitudAdicionalDto } from './dto/create-solicitud.dto';
@@ -13,6 +14,8 @@ export class SolicitudesController {
   constructor(private readonly service: SolicitudesService) {}
 
   @Post()
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Envia plantillas a todas las plantas activas con supervisor. Una solicitud por planta con todos los insumos activos.' })
   enviarAplantas(@Body() dto: CrearSolicitudesDto) {
     return this.service.enviarAplantas(dto);
@@ -87,6 +90,8 @@ export class SolicitudesController {
   }
 
   @Patch(':id/reabrir')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Encargado re-abre la solicitud: vuelve a PENDIENTE para que el supervisor pueda editarla de nuevo' })
   reabrir(@Param('id') id: string) {
     return this.service.reabrir(id);
@@ -104,12 +109,16 @@ export class SolicitudesController {
   }
 
   @Post(':id/adicionales')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Agrega un insumo adicional a la solicitud (exclusivo del mes y planta)' })
   addAdicional(@Param('id') id: string, @Body() dto: CrearAdicionalDto) {
     return this.service.addAdicional(id, dto);
   }
 
   @Patch(':id/adicionales/:adicionalId')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Edita un insumo adicional' })
   updateAdicional(
     @Param('id') id: string,
@@ -120,6 +129,8 @@ export class SolicitudesController {
   }
 
   @Delete(':id/adicionales/:adicionalId')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Elimina un insumo adicional de la solicitud' })
   removeAdicional(@Param('id') id: string, @Param('adicionalId') adicionalId: string) {
     return this.service.removeAdicional(id, adicionalId);

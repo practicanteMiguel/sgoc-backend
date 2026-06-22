@@ -83,26 +83,26 @@ export class VoiceLogsController {
   @Get(':id')
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User & { roles: string[] },
   ) {
-    return this.service.findOne(id, user.id);
+    return this.service.findOne(id, user.id, user.roles?.includes('admin'));
   }
 
   @Patch(':id/transcription')
   updateTranscription(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTranscriptionDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User & { roles: string[] },
   ) {
-    return this.service.updateTranscription(id, user.id, dto.transcription);
+    return this.service.updateTranscription(id, user.id, dto.transcription, user.roles?.includes('admin'));
   }
 
   @Delete(':id')
   remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User & { roles: string[] },
   ) {
-    return this.service.remove(id, user.id);
+    return this.service.remove(id, user.id, user.roles?.includes('admin'));
   }
 
   @Post('report')

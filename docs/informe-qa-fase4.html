@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe QA - Fase 4 | gestion-backend</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1a1a2e; background: #fff; line-height: 1.6; }
+  .cover { min-height: 100vh; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 80px 80px; page-break-after: always; position: relative; overflow: hidden; }
+  .cover::before { content: ''; position: absolute; top: -100px; right: -100px; width: 500px; height: 500px; border-radius: 50%; background: rgba(229, 57, 53, 0.08); }
+  .cover::after { content: ''; position: absolute; bottom: -80px; left: -80px; width: 400px; height: 400px; border-radius: 50%; background: rgba(26, 35, 126, 0.3); }
+  .cover-badge { background: rgba(229, 57, 53, 0.9); color: white; padding: 6px 18px; border-radius: 4px; font-size: 9pt; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 32px; display: inline-block; }
+  .cover h1 { font-size: 38pt; font-weight: 800; line-height: 1.1; margin-bottom: 16px; max-width: 700px; }
+  .cover h1 span { color: #e53935; }
+  .cover .subtitle { font-size: 16pt; color: rgba(255,255,255,0.7); margin-bottom: 48px; max-width: 600px; font-weight: 300; }
+  .cover-meta { display: flex; gap: 48px; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 32px; width: 100%; }
+  .cover-meta-item label { font-size: 8pt; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.45); display: block; margin-bottom: 4px; }
+  .cover-meta-item span { font-size: 11pt; color: rgba(255,255,255,0.9); font-weight: 600; }
+  .cover-stats { display: flex; gap: 32px; margin-top: 40px; }
+  .stat-box { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px 28px; text-align: center; }
+  .stat-box .num { font-size: 28pt; font-weight: 800; color: #e53935; line-height: 1; }
+  .stat-box .lbl { font-size: 9pt; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .page { max-width: 900px; margin: 0 auto; padding: 48px 64px; }
+  .section { margin-bottom: 48px; page-break-inside: avoid; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e8ecf0; }
+  .section-number { background: #1a1a2e; color: white; font-size: 11pt; font-weight: 700; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .section-title { font-size: 16pt; font-weight: 700; color: #1a1a2e; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 16px; }
+  thead tr { background: #1a1a2e; color: white; }
+  thead th { padding: 10px 14px; text-align: left; font-weight: 600; letter-spacing: 0.3px; }
+  tbody tr:nth-child(even) { background: #f7f8fc; }
+  tbody tr:hover { background: #eef0f8; }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid #e8ecf0; vertical-align: top; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 8.5pt; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; }
+  .badge-red    { background: #ffebee; color: #c62828; }
+  .badge-green  { background: #e8f5e9; color: #2e7d32; }
+  .badge-orange { background: #fff3e0; color: #e65100; }
+  .badge-blue   { background: #e3f2fd; color: #1565c0; }
+  .badge-gray   { background: #f5f5f5; color: #555; }
+  .badge-purple { background: #f3e5f5; color: #6a1b9a; }
+  .alert { border-radius: 6px; padding: 14px 18px; margin-bottom: 16px; border-left: 4px solid; font-size: 10pt; }
+  .alert-danger  { background: #fff5f5; border-color: #e53935; color: #b71c1c; }
+  .alert-warning { background: #fffde7; border-color: #f9a825; color: #7c6000; }
+  .alert-success { background: #f1f8e9; border-color: #558b2f; color: #1b5e20; }
+  .alert-info    { background: #e8f4fd; border-color: #1565c0; color: #0d3b7a; }
+  .alert strong  { font-weight: 700; }
+  code { font-family: 'Consolas', 'Courier New', monospace; font-size: 9pt; background: #f0f4f8; padding: 1px 6px; border-radius: 3px; color: #c62828; }
+  pre { font-family: 'Consolas', 'Courier New', monospace; font-size: 8.5pt; background: #1e2530; color: #a8d8a8; padding: 16px 20px; border-radius: 6px; overflow-x: auto; line-height: 1.7; margin: 12px 0 20px 0; }
+  pre .k  { color: #82aaff; }
+  pre .s  { color: #c3e88d; }
+  pre .c  { color: #546e7a; font-style: italic; }
+  pre .t  { color: #ffcb6b; }
+  pre .del { color: #ef9a9a; }
+  pre .add { color: #a8d8a8; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: #f7f8fc; border: 1px solid #e0e4ed; border-radius: 8px; padding: 16px 20px; }
+  .card h4 { font-size: 10pt; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+  .card p  { font-size: 9.5pt; color: #555; line-height: 1.5; }
+  .test-group { margin-bottom: 20px; }
+  .test-group-title { font-size: 10pt; font-weight: 700; color: #1a1a2e; background: #eef0f8; padding: 8px 14px; border-radius: 4px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .test-list { list-style: none; padding-left: 8px; }
+  .test-list li { padding: 5px 12px; font-size: 9.5pt; color: #333; display: flex; align-items: flex-start; gap: 10px; border-bottom: 1px solid #f0f2f7; }
+  .test-list li::before { content: '✓'; color: #2e7d32; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .test-list li.security::before { content: '🔒'; }
+  .fix-card { border: 1px solid #c8e6c9; border-left: 5px solid #2e7d32; border-radius: 6px; padding: 16px 20px; margin-bottom: 16px; background: #fff; }
+  .fix-card .fix-title { font-size: 11pt; font-weight: 700; color: #1b5e20; margin-bottom: 6px; }
+  .fix-card .fix-body { font-size: 9.5pt; color: #444; line-height: 1.6; }
+  .footer { margin-top: 64px; padding-top: 20px; border-top: 2px solid #e0e4ed; display: flex; justify-content: space-between; font-size: 8.5pt; color: #999; }
+  h3 { font-size: 12pt; color: #1a1a2e; margin: 20px 0 12px 0; }
+  p  { margin-bottom: 10px; font-size: 10.5pt; color: #333; line-height: 1.65; }
+  ul { padding-left: 20px; margin-bottom: 12px; }
+  ul li { font-size: 10pt; color: #333; margin-bottom: 4px; line-height: 1.6; }
+  @media print { .cover { min-height: 100vh; } .section { page-break-inside: avoid; } .fix-card { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-badge">Informe Tecnico - Confidencial</div>
+  <h1>Informe QA<br><span>Fase 4</span></h1>
+  <p class="subtitle">Modulo de Cumplimiento: Entregables, Horarios, Evidencias y Formatos (Taxi, Pernoctacion, Disponibilidad, Horas Extra).</p>
+  <div class="cover-stats">
+    <div class="stat-box"><div class="num">43</div><div class="lbl">Tests ejecutados</div></div>
+    <div class="stat-box"><div class="num">43</div><div class="lbl">Tests pasando</div></div>
+    <div class="stat-box"><div class="num">5</div><div class="lbl">Bugs corregidos</div></div>
+    <div class="stat-box"><div class="num">0</div><div class="lbl">Vulnerabilidades criticas</div></div>
+  </div>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><label>Proyecto</label><span>gestion-backend</span></div>
+    <div class="cover-meta-item"><label>Fase</label><span>Compliance: Deliverables, Schedules, Evidences, Formats</span></div>
+    <div class="cover-meta-item"><label>Fecha</label><span>Junio 2026</span></div>
+    <div class="cover-meta-item"><label>Stack</label><span>NestJS 11 / PostgreSQL / Jest</span></div>
+    <div class="cover-meta-item"><label>Resultado</label><span style="color:#4caf50;">100% PASS</span></div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- 1. RESUMEN EJECUTIVO -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <div class="section-title">Resumen ejecutivo</div>
+    </div>
+    <p>Se implementaron 43 tests E2E para el modulo de <strong>Compliance</strong> cubriendo la generacion de entregables mensuales, CRUD de deliverables, horarios, evidencias en Drive y los cuatro formatos de datos (taxi, pernoctacion, disponibilidad, horas extra). Esta fue la fase con mayor numero de bugs encontrados (5), todos relacionados con asunciones incorrectas sobre la estructura de respuesta del API y el comportamiento de las FKs en la limpieza de datos.</p>
+    <div class="alert alert-success">
+      <strong>Resultado final:</strong> 43 de 43 tests pasando sobre <code>compliance.e2e-spec.ts</code>.
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h4>generate-month</h4>
+        <p>Crea los 6 entregables del mes en orden: taxi, pernoctacion, horas_extra, disponibilidad, schedule_6x6, schedule_5x2. Retorna <code>&#123;message, deliverables: []&#125;</code>.</p>
+      </div>
+      <div class="card">
+        <h4>Format type validation</h4>
+        <p>Cada endpoint de formato (taxi, pernoctacion, etc.) valida que el <code>deliverable.format_type</code> coincida con la ruta. Usar el ID incorrecto devuelve 400.</p>
+      </div>
+      <div class="card">
+        <h4>supervisor_id RESTRICT</h4>
+        <p><code>deliverables</code> y <code>schedules</code> tienen FK <code>supervisor_id</code> con <code>onDelete: RESTRICT</code>. El cleanup debe eliminar deliverables y schedules antes que los usuarios.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. TESTS IMPLEMENTADOS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <div class="section-title">Tests implementados (43 en total)</div>
+    </div>
+    <div class="alert alert-info">
+      Prefijo <strong>[SEGURIDAD]</strong> indica tests que validan restricciones de autorizacion por rol.
+    </div>
+
+    <div class="test-group">
+      <div class="test-group-title">
+        <span class="badge badge-purple">compliance.e2e-spec.ts</span>
+        Generacion de Entregables (generate-month) &mdash; 3 tests
+      </div>
+      <ul class="test-list">
+        <li>Genera los 6 entregables del mes (beforeAll exitoso, deliverables con ID capturados por format_type)</li>
+        <li class="security">[SEGURIDAD] Usuario sin rol recibe 403 en POST /compliance/generate-month</li>
+        <li>Retorna 400 con mes invalido (mayor a 12)</li>
+      </ul>
+    </div>
+
+    <div class="test-group">
+      <div class="test-group-title">
+        <span class="badge badge-purple">compliance.e2e-spec.ts</span>
+        Entregables (Deliverables) &mdash; 10 tests
+      </div>
+      <ul class="test-list">
+        <li>Cualquier usuario autenticado puede listar entregables (GET /compliance/deliverables)</li>
+        <li>Filtra entregables por field_id</li>
+        <li>Filtra entregables por mes y anio</li>
+        <li>Cualquier usuario autenticado puede ver el resumen de cumplimiento por campo</li>
+        <li>Cualquier usuario autenticado puede ver el detalle mensual de cumplimiento</li>
+        <li>Cualquier usuario autenticado puede ver un entregable por ID</li>
+        <li>Retorna 404 para deliverable UUID inexistente</li>
+        <li>Cualquier usuario autenticado puede marcar entregable como entregado (submit)</li>
+        <li>Admin puede marcar un entregable como visto (viewed)</li>
+        <li class="security">[SEGURIDAD] Usuario sin rol recibe 403 en PATCH viewed</li>
+      </ul>
+    </div>
+
+    <div class="test-group">
+      <div class="test-group-title">
+        <span class="badge badge-purple">compliance.e2e-spec.ts</span>
+        Recordatorios (Reminders) &mdash; 4 tests
+      </div>
+      <ul class="test-list">
+        <li>Admin puede disparar recordatorios manuales (POST /compliance/reminders/trigger, retorna 201)</li>
+        <li class="security">[SEGURIDAD] Coordinator recibe 403 en trigger de recordatorios</li>
+        <li class="security">[SEGURIDAD] Usuario sin rol recibe 403 en trigger</li>
+        <li>La respuesta contiene la propiedad notifications_sent (array)</li>
+      </ul>
+    </div>
+
+    <div class="test-group">
+      <div class="test-group-title">
+        <span class="badge badge-purple">compliance.e2e-spec.ts</span>
+        Horarios (Schedules) &mdash; 5 tests
+      </div>
+      <ul class="test-list">
+        <li>Cualquier usuario autenticado puede crear un horario (POST /compliance/schedules)</li>
+        <li>Retorna 400 con tipo de horario invalido (no es uno de los enum values)</li>
+        <li>Retorna 400 sin supervisor_id en el body</li>
+        <li>Cualquier usuario autenticado puede listar horarios</li>
+        <li>Cualquier usuario autenticado puede ver un horario por ID</li>
+      </ul>
+    </div>
+
+    <div class="test-group">
+      <div class="test-group-title">
+        <span class="badge badge-purple">compliance.e2e-spec.ts</span>
+        Evidencias (Evidences) &mdash; 5 tests
+      </div>
+      <ul class="test-list">
+        <li>Cualquier usuario autenticado puede listar evidencias de Drive</li>
+        <li>Filtra evidencias por field_id</li>
+        <li>Cualquier usuario autenticado puede limpiar el cache de Drive</li>
+        <li class="security">[SEGURIDAD] Upload de evidencias requiere autenticacion (401 sin token)</li>
+        <li>Upload sin archivo adjunto retorna 400 (multipart requerido)</li>
+      </ul>
+    </div>
+
+    <div class="test-group">
+      <div class="test-group-title">
+        <span class="badge badge-purple">compliance.e2e-spec.ts</span>
+        Formatos de Datos &mdash; 16 tests
+      </div>
+      <ul class="test-list">
+        <li>GET /deliverables/:id/taxi retorna el formato para deliverable de tipo taxi (200)</li>
+        <li class="security">[SEGURIDAD] Retorna 401 sin token en GET taxi format</li>
+        <li>POST /deliverables/:id/taxi crea registro taxi para el deliverable correcto (200/201)</li>
+        <li>GET /deliverables/:id/pernoctacion retorna el formato con ID de tipo pernoctacion</li>
+        <li class="security">[SEGURIDAD] Retorna 401 sin token en GET pernoctacion</li>
+        <li>POST /deliverables/:id/pernoctacion crea registro para el deliverable correcto</li>
+        <li>GET /deliverables/:id/disponibilidad retorna el formato con ID de tipo disponibilidad</li>
+        <li class="security">[SEGURIDAD] Retorna 401 sin token en GET disponibilidad</li>
+        <li>POST /deliverables/:id/disponibilidad crea registro para el deliverable correcto</li>
+        <li>GET /deliverables/:id/horas-extra retorna el formato con ID de tipo horas_extra</li>
+        <li class="security">[SEGURIDAD] Retorna 401 sin token en GET horas-extra</li>
+        <li>POST /deliverables/:id/horas-extra crea registro para el deliverable correcto</li>
+        <li>GET con deliverable del tipo equivocado retorna 400 (format_type mismatch)</li>
+        <li>GET /deliverables/:id/schedule-6x6 retorna el formato de horario 6x6</li>
+        <li class="security">[SEGURIDAD] Retorna 401 sin token en GET schedule-6x6</li>
+        <li>GET /deliverables/:id/schedule-5x2 retorna el formato de horario 5x2</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 3. BUGS ENCONTRADOS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <div class="section-title">Bugs encontrados y corregidos</div>
+    </div>
+    <div class="alert alert-success">
+      Se encontraron y corrigieron 5 bugs. Todos eran asunciones incorrectas del test sobre respuestas del API o nombres de columnas en la base de datos.
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">Bug 1 &mdash; deliverables.supervisor_id con onDelete RESTRICT en cleanup</div>
+      <div class="fix-body">
+        <strong>Error:</strong> <code>violates foreign key constraint "FK_..." on table "deliverables": update or delete on table "users" violates RESTRICT</code><br><br>
+        <strong>Causa:</strong> La entidad <code>Deliverable</code> usa <code>supervisor_id</code> FK con <code>onDelete: 'RESTRICT'</code>. El cleanup intentaba actualizar una columna <code>created_by</code> que no existe. Debia eliminar los deliverables por supervisor antes de eliminar el usuario.
+      </div>
+      <pre><span class="del">// ANTES (incorrecto &mdash; columna created_by no existe en deliverables)</span>
+<span class="del">UPDATE deliverables SET created_by = NULL WHERE created_by IN (...)</span>
+
+<span class="add">// DESPUES (eliminar registros hijos primero, luego deliverables)</span>
+<span class="add">DELETE FROM taxi_records WHERE deliverable_id IN (SELECT id FROM deliverables WHERE supervisor_id IN (...))</span>
+<span class="add">DELETE FROM pernoctacion_records WHERE deliverable_id IN (SELECT id FROM deliverables WHERE supervisor_id IN (...))</span>
+<span class="add">DELETE FROM disponibilidad_records WHERE deliverable_id IN (...)</span>
+<span class="add">DELETE FROM horas_extra_records WHERE deliverable_id IN (...)</span>
+<span class="add">DELETE FROM deliverables WHERE supervisor_id IN (...)</span></pre>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">Bug 2 &mdash; schedules.supervisor_id tambien con onDelete RESTRICT</div>
+      <div class="fix-body">
+        <strong>Causa:</strong> La entidad <code>Schedule</code> tiene el mismo patron que <code>Deliverable</code>: <code>supervisor_id</code> FK con <code>onDelete: 'RESTRICT'</code>. El cleanup tampoco eliminaba schedules antes de los usuarios.
+      </div>
+      <pre><span class="del">UPDATE schedules SET created_by = NULL WHERE created_by IN (...)</span>
+
+<span class="add">DELETE FROM schedule_days WHERE schedule_id IN (SELECT id FROM schedules WHERE supervisor_id IN (...))</span>
+<span class="add">DELETE FROM schedules WHERE supervisor_id IN (...)</span></pre>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">Bug 3 &mdash; generate-month retorna &#123;message, deliverables&#125; no un array</div>
+      <div class="fix-body">
+        <strong>Error:</strong> <code>deliverableId</code> quedaba <code>undefined</code> y todos los tests de formato fallaban en cascada.<br><br>
+        <strong>Causa:</strong> El servicio retorna <code>&#123; message: "...", deliverables: [...] &#125;</code>. El test asumia que el body era directamente el array de entregables y lo verificaba con <code>Array.isArray(genRes.body)</code>.
+      </div>
+      <pre><span class="del">// ANTES &mdash; Array.isArray(genRes.body) era false siempre</span>
+<span class="del">const delivs = Array.isArray(genRes.body) ? genRes.body : [];</span>
+<span class="del">deliverableId = delivs[0]?.id;</span>
+
+<span class="add">// DESPUES &mdash; extraer del objeto o del array segun el caso</span>
+<span class="add">const delivs = [200,201].includes(genRes.status)</span>
+<span class="add">  ? (Array.isArray(genRes.body) ? genRes.body : genRes.body?.deliverables ?? [])</span>
+<span class="add">  : [];</span>
+<span class="add">deliverableId    = delivs.find(d => d.format_type === 'taxi')?.id;</span>
+<span class="add">pernoctacionId   = delivs.find(d => d.format_type === 'pernoctacion')?.id;</span>
+<span class="add">disponibilidadId = delivs.find(d => d.format_type === 'disponibilidad')?.id;</span>
+<span class="add">horasExtraId     = delivs.find(d => d.format_type === 'horas_extra')?.id;</span></pre>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">Bug 4 &mdash; GET pernoctacion/disponibilidad/horas-extra retornaba 400 con deliverable de tipo taxi</div>
+      <div class="fix-body">
+        <strong>Causa:</strong> El servicio valida que <code>deliverable.format_type</code> coincida con el endpoint llamado. Todos los tests de formato usaban el ID del primer deliverable generado (taxi). Llamar <code>GET /deliverables/{taxi-id}/pernoctacion</code> retorna 400 porque el tipo no coincide.<br><br>
+        <strong>Patron descubierto:</strong> <code>REQUIRED_FORMATS = [TAXI, PERNOCTACION, HORAS_EXTRA, DISPONIBILIDAD, SCHEDULE_6X6, SCHEDULE_5X2]</code> &mdash; el orden de generacion determina que el indice 0 es siempre taxi, 1 pernoctacion, etc.
+      </div>
+      <pre><span class="del">// ANTES &mdash; todos usaban el mismo ID (taxi)</span>
+<span class="del">GET /compliance/deliverables/${deliverableId}/pernoctacion</span>
+
+<span class="add">// DESPUES &mdash; cada formato usa el ID de su propio tipo</span>
+<span class="add">GET /compliance/deliverables/${pernoctacionId}/pernoctacion</span>
+<span class="add">GET /compliance/deliverables/${disponibilidadId}/disponibilidad</span>
+<span class="add">GET /compliance/deliverables/${horasExtraId}/horas-extra</span></pre>
+    </div>
+
+    <div class="fix-card">
+      <div class="fix-title">Bug 5 &mdash; reminders/trigger retorna 201 y la clave es notifications_sent</div>
+      <div class="fix-body">
+        <strong>Error 1:</strong> <code>expected 200 "OK", got 201 "Created"</code> &mdash; NestJS asigna HTTP 201 a <code>@Post()</code> por defecto.<br>
+        <strong>Error 2:</strong> <code>Expected path: "sent" &mdash; Received: &#123; "notifications_sent": [], "deadline_date": "..." &#125;</code>
+      </div>
+      <pre><span class="del">.expect(200);</span>
+<span class="del">expect(res.body).toHaveProperty('sent');</span>
+
+<span class="add">expect([200, 201]).toContain(res.status);</span>
+<span class="add">expect(res.body).toHaveProperty('notifications_sent');</span></pre>
+    </div>
+  </div>
+
+  <!-- 4. PATRON TECNICO ESTABLECIDO -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <div class="section-title">Patron tecnico establecido</div>
+    </div>
+    <h3>Capturar IDs por format_type en beforeAll</h3>
+    <p>Cuando el setup genera multiples recursos del mismo tipo con variantes (como los 6 deliverables de diferentes formatos), usar <code>.find()</code> por propiedad discriminante en lugar de asumir posicion en el array:</p>
+    <pre><span class="k">let</span> deliverableId: string;    <span class="c">// taxi</span>
+<span class="k">let</span> pernoctacionId: string;
+<span class="k">let</span> disponibilidadId: string;
+<span class="k">let</span> horasExtraId: string;
+
+<span class="c">// En beforeAll, tras generar:</span>
+deliverableId    = delivs.find(d => d.format_type === <span class="s">'taxi'</span>)?.id;
+pernoctacionId   = delivs.find(d => d.format_type === <span class="s">'pernoctacion'</span>)?.id;
+disponibilidadId = delivs.find(d => d.format_type === <span class="s">'disponibilidad'</span>)?.id;
+horasExtraId     = delivs.find(d => d.format_type === <span class="s">'horas_extra'</span>)?.id;</pre>
+
+    <h3>FKs con RESTRICT requieren cleanup activo</h3>
+    <p>Siempre que una FK use <code>onDelete: 'RESTRICT'</code> y el test deba eliminar el registro referenciado, el cleanup debe:</p>
+    <ul>
+      <li>Eliminar registros hijo (registros de formatos: taxi_records, pernoctacion_records, etc.)</li>
+      <li>Eliminar el registro padre (deliverable, schedule)</li>
+      <li>Solo entonces eliminar el usuario al que apunta <code>supervisor_id</code></li>
+    </ul>
+  </div>
+
+  <!-- 5. PROXIMAS FASES -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <div class="section-title">Hoja de ruta de testing</div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Fase</th><th>Modulos a cubrir</th><th>Complejidad</th><th>Estado</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Fase 1</strong></td>
+          <td>Auth, Users, Roles</td>
+          <td><span class="badge badge-gray">Completada</span></td>
+          <td><span class="badge badge-green">68/68 PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>Fase 2</strong></td>
+          <td>Plants: Fields, Employees, Crews, Logbook, Activities, Technical Reports</td>
+          <td><span class="badge badge-gray">Completada</span></td>
+          <td><span class="badge badge-green">53/53 PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>Fase 3</strong></td>
+          <td>Plants: Vias (Monthly Log, Reports, Vault), Dotaciones</td>
+          <td><span class="badge badge-gray">Completada</span></td>
+          <td><span class="badge badge-green">40/40 PASS</span></td>
+        </tr>
+        <tr style="background:#f1f8e9;">
+          <td><strong>Fase 4</strong> (esta)</td>
+          <td>Compliance: Deliverables, Schedules, Evidences, Formats (Taxi, Pernoctacion, Disponibilidad, Horas Extra)</td>
+          <td><span class="badge badge-gray">Completada</span></td>
+          <td><span class="badge badge-green">43/43 PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>Fase 5</strong></td>
+          <td>Consumables: Insumos, Solicitudes, Requisiciones</td>
+          <td><span class="badge badge-orange">Media</span></td>
+          <td><span class="badge badge-gray">Ver informe-qa-fase5</span></td>
+        </tr>
+        <tr>
+          <td><strong>Fase 6</strong></td>
+          <td>Modules, Audit, Notifications, Voice Logs</td>
+          <td><span class="badge badge-blue">Baja</span></td>
+          <td><span class="badge badge-gray">Pendiente</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <span>gestion-backend &mdash; Informe QA Fase 4</span>
+    <span>Generado: Junio 2026 &mdash; Confidencial</span>
+    <span>Tests: 43/43 PASS &bull; Stack: NestJS 11 / PostgreSQL / Jest</span>
+  </div>
+
+</div>
+</body>
+</html>

@@ -21,6 +21,7 @@ export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
   @Get()
+  @Roles('admin', 'coordinator', 'module_manager', 'supervisor')
   @ApiOperation({ summary: 'Listar empleados. Filtrar por field_id (query param)' })
   findAll(
     @Query('page') page = 1,
@@ -31,6 +32,7 @@ export class EmployeesController {
   }
 
   @Get(':id')
+  @Roles('admin', 'coordinator', 'module_manager', 'supervisor')
   @ApiOperation({ summary: 'Obtener empleado por ID' })
   findOne(@Param('id') id: string) {
     return this.employeesService.findOne(id);

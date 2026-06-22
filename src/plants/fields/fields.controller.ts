@@ -22,12 +22,14 @@ export class FieldsController {
   constructor(private readonly fieldsService: FieldsService) {}
 
   @Get()
+  @Roles('admin', 'coordinator', 'module_manager', 'supervisor')
   @ApiOperation({ summary: 'Listar todas las plantas' })
   findAll(@Query('page') page = 1, @Query('limit') limit = 20) {
     return this.fieldsService.findAll(+page, +limit);
   }
 
   @Get(':id')
+  @Roles('admin', 'coordinator', 'module_manager', 'supervisor')
   @ApiOperation({ summary: 'Obtener planta por ID con empleados y supervisor' })
   findOne(@Param('id') id: string) {
     return this.fieldsService.findOne(id);
@@ -48,7 +50,7 @@ export class FieldsController {
   }
 
   @Delete(':id')
-  @Roles('admin', 'module_manager')
+  @Roles('admin', 'coordinator', 'module_manager')
   @ApiOperation({ summary: 'Eliminar planta (soft delete)' })
   remove(@Param('id') id: string) {
     return this.fieldsService.remove(id);

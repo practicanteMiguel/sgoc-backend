@@ -25,9 +25,9 @@ export class DotacionSpace {
   @JoinColumn({ name: 'field_id' })
   field!: Field;
 
-  @ManyToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'supervisor_id' })
-  supervisor!: User;
+  supervisor!: User | null;
 
   @OneToMany(() => SolicitudDotacion, (s) => s.space)
   solicitudes!: SolicitudDotacion[];
