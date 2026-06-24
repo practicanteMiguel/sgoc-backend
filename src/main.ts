@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
@@ -10,6 +11,7 @@ async function bootstrap() {
 
   // HTTP security headers: XSS, clickjacking, MIME sniffing, etc.
   app.use(helmet());
+  app.use(cookieParser());
 
   app.setGlobalPrefix('api/v1');
 
@@ -23,7 +25,7 @@ async function bootstrap() {
           process.env.FRONTEND_NETWORK_URL ?? 'http://localhost:3000',
         ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Api-Key'],
     credentials: true,
   });
 

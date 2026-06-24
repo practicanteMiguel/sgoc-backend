@@ -92,11 +92,33 @@ export class AuthService {
       if (!session)
         throw new UnauthorizedException('Sesión inválida');
 
+      // Rotar: invalidar sesion anterior
+      await this.sessionRepo.update(session.id, { is_active: false, revoked_at: new Date() });
+
       const user       = await this.usersService.findById(payload.sub);
       const roles      = user.user_roles?.map((ur: any) => ur.role.slug) ?? [];
       const newPayload = { sub: user.id, email: user.email, roles };
 
-      return { access_token: this.jwtService.sign(newPayload) };
+      const accessToken = this.jwtService.sign(newPayload);
+      const newRefreshToken = this.jwtService.sign(newPayload, {
+        secret:    this.config.get('JWT_REFRESH_SECRET'),
+        expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN'),
+        jwtid:     crypto.randomUUID(),
+      });
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const newSession = this.sessionRepo.create({
+        refresh_token: newRefreshToken,
+        ip_address:    session.ip_address,
+        user_agent:    session.user_agent,
+        expires_at:    expiresAt,
+      });
+      newSession.user = { id: user.id } as any;
+      await this.sessionRepo.save(newSession);
+
+      return { access_token: accessToken, refresh_token: newRefreshToken };
     } catch {
       throw new UnauthorizedException('Refresh token inválido o expirado');
     }
