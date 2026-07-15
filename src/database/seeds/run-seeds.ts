@@ -14,6 +14,7 @@ import { seedEmployeesSanFrancisco } from './10-employees-sanfrancisco.seed';
 import { seedEmployeesTello } from './11-employees-tello.seed';
 import { seedEmployeesYaguara } from './12-employees-yaguara.seed';
 import { seedInsumos } from './13-insumos.seed';
+import { seedIndumentaria } from './14-indumentaria.seed';
 
 dotenv.config();
 
@@ -29,7 +30,7 @@ async function runSeeds() {
   await dataSource.initialize();
   console.log('🌱 Iniciando seeds...\n');
 
-  await seedRoles(dataSource);
+  /*await seedRoles(dataSource);
   await seedPermissions(dataSource);
   await seedModules(dataSource);
   await seedRolePermissions(dataSource);
@@ -41,7 +42,8 @@ async function runSeeds() {
   await seedEmployeesSanFrancisco(dataSource);
   await seedEmployeesTello(dataSource);
   await seedEmployeesYaguara(dataSource);
-  await seedInsumos(dataSource);
+  await seedInsumos(dataSource);*/
+  await seedIndumentaria(dataSource);
 
   console.log('\n🎉 Seeds completados correctamente');
   await dataSource.destroy();
