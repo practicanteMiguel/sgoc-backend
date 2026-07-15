@@ -30,7 +30,7 @@ async function runSeeds() {
   await dataSource.initialize();
   console.log('🌱 Iniciando seeds...\n');
 
-  /*await seedRoles(dataSource);
+  await seedRoles(dataSource);
   await seedPermissions(dataSource);
   await seedModules(dataSource);
   await seedRolePermissions(dataSource);
@@ -42,7 +42,7 @@ async function runSeeds() {
   await seedEmployeesSanFrancisco(dataSource);
   await seedEmployeesTello(dataSource);
   await seedEmployeesYaguara(dataSource);
-  await seedInsumos(dataSource);*/
+  await seedInsumos(dataSource);
   await seedIndumentaria(dataSource);
 
   console.log('\n🎉 Seeds completados correctamente');
