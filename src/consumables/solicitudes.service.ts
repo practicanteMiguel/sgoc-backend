@@ -9,6 +9,8 @@ import { Insumo } from './entities/insumo.entity';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
 import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
+import { RequisicionEntregaEvento } from './entities/requisicion-entrega-evento.entity';
+import { computeEntregaTotalesBatch } from './utils/rq-entrega-totales.util';
 import { Field } from '../plants/fields/entities/field.entity';
 import { FieldLugar } from '../plants/fields/entities/field-lugar.entity';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -40,6 +42,7 @@ export class SolicitudesService {
     @InjectRepository(Requisicion) private rqRepo: Repository<Requisicion>,
     @InjectRepository(RequisicionItem) private rqItemRepo: Repository<RequisicionItem>,
     @InjectRepository(RequisicionItemAdicional) private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
+    @InjectRepository(RequisicionEntregaEvento) private eventoRepo: Repository<RequisicionEntregaEvento>,
     @InjectRepository(Field)      private fieldRepo:      Repository<Field>,
     @InjectRepository(FieldLugar) private fieldLugarRepo:  Repository<FieldLugar>,
     @InjectRepository(User)       private userRepo:        Repository<User>,
@@ -291,18 +294,31 @@ export class SolicitudesService {
       order: { categoria: 'ASC' },
     });
 
-    return rqs.map(rq => ({
-      id: rq.id,
-      numero_rq: rq.numero_rq,
-      categoria: rq.categoria,
-      estado: rq.estado,
-      lugar: rq.lugar,
-      firmado_supervisor: !!rq.firma_supervisor_url,
-      firmado_encargado: !!rq.firma_encargado_url,
-      firma_supervisor_url: rq.firma_supervisor_url,
-      firma_encargado_url: rq.firma_encargado_url,
-      created_at: rq.created_at,
-    }));
+    const recepcionCompletadaMap = new Map(rqs.map(r => [r.id, r.recepcion_completada]));
+    const totales = await computeEntregaTotalesBatch(
+      this.rqItemRepo, this.rqAdicionalRepo, this.eventoRepo,
+      rqs.map(r => r.id), recepcionCompletadaMap,
+    );
+
+    return rqs.map(rq => {
+      const t = totales.get(rq.id);
+      return {
+        id: rq.id,
+        numero_rq: rq.numero_rq,
+        categoria: rq.categoria,
+        estado: rq.estado,
+        lugar: rq.lugar,
+        firmado_supervisor: !!rq.firma_supervisor_url,
+        firmado_encargado: !!rq.firma_encargado_url,
+        firma_supervisor_url: rq.firma_supervisor_url,
+        firma_encargado_url: rq.firma_encargado_url,
+        recepcion_completada: rq.recepcion_completada,
+        fecha_entrega: rq.fecha_entrega,
+        created_at: rq.created_at,
+        ...t,
+        fecha_primera_entrega: t?.fecha_primera_entrega ?? rq.fecha_entrega,
+      };
+    });
   }
 
   async findMiSolicitud(userId: string, mes: number, anio: number) {

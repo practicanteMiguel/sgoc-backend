@@ -53,6 +53,7 @@ export class LogbookService {
   async findAll(page = 1, limit = 20, crewId?: string, year?: number, week?: number) {
     const qb = this.logRepo
       .createQueryBuilder('l')
+      .withDeleted()
       .leftJoinAndSelect('l.crew', 'crew')
       .leftJoinAndSelect('crew.field', 'field')
       .leftJoinAndSelect('l.activities', 'activities')
@@ -73,6 +74,7 @@ export class LogbookService {
     const log = await this.logRepo.findOne({
       where: { id },
       relations: ['crew', 'crew.field', 'activities', 'created_by'],
+      withDeleted: true,
     });
     if (!log) throw new NotFoundException('Semana no encontrada');
     return log;
@@ -119,6 +121,7 @@ export class LogbookService {
     const activity = await this.activityRepo.findOne({
       where: { id: activityId },
       relations: ['weekly_log', 'weekly_log.crew', 'weekly_log.crew.field'],
+      withDeleted: true,
     });
     if (!activity) throw new NotFoundException('Actividad no encontrada');
 

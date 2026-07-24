@@ -1,13 +1,14 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import sgMail from '@sendgrid/mail';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
+  private readonly resend: Resend;
 
   constructor(private readonly config: ConfigService) {
-    sgMail.setApiKey(this.config.getOrThrow<string>('SENDGRID_API_KEY'));
+    this.resend = new Resend(this.config.getOrThrow<string>('RESEND_API_KEY'));
   }
 
   // ── Email de bienvenida con contraseña temporal y verificación ──
@@ -20,12 +21,13 @@ export class MailService {
     const verifyUrl = `${this.config.get('FRONTEND_URL')}/auth/verify-email?token=${token}`;
 
     try {
-      await sgMail.send({
+      const { error } = await this.resend.emails.send({
         from:    this.config.getOrThrow<string>('MAIL_FROM'),
         to:      email,
         subject: 'Bienvenido — Activa tu cuenta',
         html:    this.welcomeTemplate(firstName, tempPassword, verifyUrl),
       });
+      if (error) throw error;
       this.logger.log(`✅ Email de verificación enviado a ${email}`);
     } catch (err: any) {
       const body = err.response?.body ?? err.response ?? err.message;
@@ -43,12 +45,13 @@ export class MailService {
     newPassword: string,
   ): Promise<void> {
     try {
-      await sgMail.send({
+      const { error } = await this.resend.emails.send({
         from:    this.config.getOrThrow<string>('MAIL_FROM'),
         to:      email,
         subject: 'Tu contraseña fue actualizada',
         html:    this.resetPasswordTemplate(firstName, newPassword),
       });
+      if (error) throw error;
       this.logger.log(`✅ Email de reset enviado a ${email}`);
     } catch (err: any) {
       this.logger.error(`❌ Error enviando email a ${email}: ${err.message}`);

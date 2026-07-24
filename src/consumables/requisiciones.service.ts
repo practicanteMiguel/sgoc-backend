@@ -5,10 +5,12 @@ import { User } from '../users/entities/user.entity';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
 import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
+import { RequisicionEntregaEvento } from './entities/requisicion-entrega-evento.entity';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
+import { computeEntregaTotalesBatch } from './utils/rq-entrega-totales.util';
 import {
   CreateRequisicionDto,
   UpdateRequisicionDto,
@@ -30,6 +32,7 @@ export class RequisicionesService {
     @InjectRepository(Requisicion) private rqRepo: Repository<Requisicion>,
     @InjectRepository(RequisicionItem) private itemRepo: Repository<RequisicionItem>,
     @InjectRepository(RequisicionItemAdicional) private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
+    @InjectRepository(RequisicionEntregaEvento) private eventoRepo: Repository<RequisicionEntregaEvento>,
     @InjectRepository(Insumo) private insumoRepo: Repository<Insumo>,
     @InjectRepository(Field) private fieldRepo: Repository<Field>,
     @InjectRepository(User) private userRepo: Repository<User>,
@@ -143,7 +146,18 @@ export class RequisicionesService {
     }
 
     const rqs = await qb.getMany();
-    return rqs.map(r => ({ ...r, mes, anio }));
+    const recepcionCompletadaMap = new Map(rqs.map(r => [r.id, r.recepcion_completada]));
+    const totales = await computeEntregaTotalesBatch(
+      this.itemRepo, this.rqAdicionalRepo, this.eventoRepo,
+      rqs.map(r => r.id), recepcionCompletadaMap,
+    );
+    return rqs.map(r => {
+      const t = totales.get(r.id);
+      return {
+        ...r, mes, anio, ...t,
+        fecha_primera_entrega: t?.fecha_primera_entrega ?? r.fecha_entrega,
+      };
+    });
   }
 
   async informe(mes: number, anio: number) {
@@ -254,6 +268,10 @@ export class RequisicionesService {
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
 
     const adicionales = await this.rqAdicionalRepo.find({ where: { requisicion_id: id } });
+    const eventos = await this.eventoRepo.find({
+      where: { requisicion_id: id },
+      order: { created_at: 'ASC' },
+    });
 
     const itemsConTotal = rq.items.map(item => ({
       id: item.id,
@@ -309,6 +327,10 @@ export class RequisicionesService {
     const total_recibido = allItems.reduce(
       (sum, i) => (i.recibido !== null ? sum + Number(i.recibido) : sum), 0,
     );
+    const itemsPendientesList = allItems.filter(
+      i => i.solicitado !== null && Number(i.recibido ?? 0) < Number(i.solicitado),
+    );
+    const tiene_faltante = rq.recepcion_completada && itemsPendientesList.length > 0;
 
     return {
       id: rq.id,
@@ -332,6 +354,15 @@ export class RequisicionesService {
       total_solicitado,
       total_recibido,
       entrega_completa: rq.recepcion_completada ? total_solicitado === total_recibido : null,
+      tiene_faltante,
+      items_pendientes: itemsPendientesList.length,
+      fecha_primera_entrega: eventos[0]?.fecha_entrega ?? rq.fecha_entrega,
+      entrega_eventos: eventos.map(e => ({
+        fecha_entrega: e.fecha_entrega,
+        entrega_completa: e.entrega_completa,
+        total_solicitado: Number(e.total_solicitado),
+        total_recibido: Number(e.total_recibido),
+      })),
       items: allItems,
       created_at: rq.created_at,
       updated_at: rq.updated_at,
@@ -368,8 +399,31 @@ export class RequisicionesService {
   async updateEstado(id: string, dto: UpdateEstadoDto) {
     const rq = await this.rqRepo.findOne({ where: { id } });
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
+
+    const estadoAnterior = rq.estado;
     rq.estado = dto.estado;
     await this.rqRepo.save(rq);
+
+    if (
+      estadoAnterior === EstadoRequisicion.PEDIDO_REALIZADO &&
+      dto.estado === EstadoRequisicion.EN_BODEGA &&
+      rq.field_id
+    ) {
+      const field = await this.fieldRepo.findOne({
+        where: { id: rq.field_id },
+        relations: ['supervisor'],
+      });
+      if (field?.supervisor) {
+        await this.notificationsService.createSystem({
+          user_id: field.supervisor.id,
+          title: 'RQ en bodega',
+          message: `La RQ número ${rq.numero_rq} ya está en bodega.`,
+          priority: NotificationPriority.HIGH,
+          data: { rq_id: rq.id, numero_rq: rq.numero_rq },
+        });
+      }
+    }
+
     return { id: rq.id, estado: rq.estado };
   }
 
@@ -399,7 +453,6 @@ export class RequisicionesService {
   async confirmarRecepcion(id: string, dto: RecepcionDto, userId: string) {
     const rq = await this.rqRepo.findOne({ where: { id } });
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
-    if (rq.recepcion_completada) throw new BadRequestException('La recepcion ya fue confirmada');
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user?.firma_url) throw new BadRequestException('Debes subir tu firma antes de confirmar la recepcion');
@@ -415,12 +468,25 @@ export class RequisicionesService {
       }
     }
 
+    // Snapshot de totales tras aplicar los recibido de esta ronda, para el evento de historial
+    const { total_solicitado, total_recibido } = await this.findOne(id);
+
     await this.rqRepo.update(id, {
       fecha_entrega: dto.fecha_entrega,
       firma_recepcion_url: user.firma_url,
       recepcion_completada: true,
       estado: EstadoRequisicion.ENTREGADO,
     });
+
+    await this.eventoRepo.save(this.eventoRepo.create({
+      requisicion_id: id,
+      fecha_entrega: dto.fecha_entrega,
+      firma_url: user.firma_url,
+      usuario_id: userId,
+      total_solicitado,
+      total_recibido,
+      entrega_completa: total_solicitado === total_recibido,
+    }));
 
     return this.findOne(id);
   }

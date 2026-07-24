@@ -4,8 +4,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { InsumosService } from './insumos.service';
 import { CreateInsumoDto, UpdateInsumoDto, CerrarMesDto, BorradorInsumoDto } from './dto/create-insumo.dto';
@@ -101,9 +99,8 @@ export class InsumosController {
   }
 
   @Post('cerrar-mes')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Compras cierra el mes: notifica a los encargados de consumables que la lista esta lista para revisar' })
   cerrarMes(@Body() dto: CerrarMesDto) {
     return this.service.cerrarMes(dto);

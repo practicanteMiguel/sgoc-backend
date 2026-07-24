@@ -57,6 +57,7 @@ export class ReportsService {
   async findAll(page = 1, limit = 20, crewId?: string) {
     const qb = this.reportRepo
       .createQueryBuilder('r')
+      .withDeleted()
       .leftJoinAndSelect('r.crew', 'crew')
       .leftJoinAndSelect('crew.field', 'field')
       .leftJoinAndSelect('r.weekly_log', 'weekly_log')
@@ -78,6 +79,7 @@ export class ReportsService {
     const report = await this.reportRepo.findOne({
       where: { id },
       relations: ['crew', 'crew.field', 'weekly_log', 'weekly_log.activities', 'created_by'],
+      withDeleted: true,
     });
     if (!report) throw new NotFoundException('Report not found');
     return this.formatReport(report);
