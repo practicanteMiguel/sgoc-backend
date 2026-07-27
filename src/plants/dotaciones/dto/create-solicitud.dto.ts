@@ -20,27 +20,17 @@ export class FirmaAutorizadorDto {
 }
 
 export class ItemRqDotacionDto {
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  codigo?: string;
-
-  @ApiProperty()
-  @IsString()
-  descripcion!: string;
-
-  @ApiProperty()
-  @IsString()
-  unidad!: string;
+  @ApiProperty({ description: 'Id del item del catalogo de indumentaria' })
+  @IsUUID()
+  indumentaria_id!: string;
 
   @ApiProperty({ enum: ['ORDINARIA', 'EXTRAORDINARIA'] })
   @IsEnum(['ORDINARIA', 'EXTRAORDINARIA'])
   tipo_requisicion!: 'ORDINARIA' | 'EXTRAORDINARIA';
 
-  @ApiProperty({ required: false })
+  @ApiProperty()
   @IsNumber()
-  @IsOptional()
-  valor_unitario?: number;
+  valor_unitario!: number;
 
   @ApiProperty()
   @IsNumber()

@@ -7,6 +7,7 @@ import { RequisicionItem } from './entities/requisicion-item.entity';
 import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
 import { RequisicionEntregaEvento } from './entities/requisicion-entrega-evento.entity';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
+import { SolicitudDotacion, EstadoSolicitudDotacion } from '../plants/dotaciones/entities/solicitud-dotacion.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
@@ -36,6 +37,7 @@ export class RequisicionesService {
     @InjectRepository(Insumo) private insumoRepo: Repository<Insumo>,
     @InjectRepository(Field) private fieldRepo: Repository<Field>,
     @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(SolicitudDotacion) private solicitudDotacionRepo: Repository<SolicitudDotacion>,
     private notificationsService: NotificationsService,
   ) {}
 
@@ -403,6 +405,17 @@ export class RequisicionesService {
     const estadoAnterior = rq.estado;
     rq.estado = dto.estado;
     await this.rqRepo.save(rq);
+
+    if (
+      dto.estado === EstadoRequisicion.ENTREGADO &&
+      rq.categoria === CategoriaInsumo.DOTACION &&
+      rq.solicitud_id
+    ) {
+      await this.solicitudDotacionRepo.update(
+        { id: rq.solicitud_id },
+        { estado: EstadoSolicitudDotacion.ENTREGADA },
+      );
+    }
 
     if (
       estadoAnterior === EstadoRequisicion.PEDIDO_REALIZADO &&

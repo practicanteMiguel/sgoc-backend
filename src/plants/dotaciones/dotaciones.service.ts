@@ -16,6 +16,7 @@ import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
 import { Requisicion, EstadoRequisicion } from '../../consumables/entities/requisicion.entity';
 import { RequisicionItemAdicional } from '../../consumables/entities/requisicion-item-adicional.entity';
 import { CategoriaInsumo } from '../../consumables/entities/insumo.entity';
+import { Indumentaria } from '../indumentaria/entities/indumentaria.entity';
 
 function sanitize(v: string) {
   return v.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^\w]/g, '');
@@ -32,6 +33,7 @@ export class DotacionesService {
     @InjectRepository(Field)              private fieldRepo:          Repository<Field>,
     @InjectRepository(Requisicion)        private rqRepo:             Repository<Requisicion>,
     @InjectRepository(RequisicionItemAdicional) private rqItemRepo:   Repository<RequisicionItemAdicional>,
+    @InjectRepository(Indumentaria)       private indumentariaRepo:   Repository<Indumentaria>,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -218,16 +220,20 @@ export class DotacionesService {
 
     const items: RequisicionItemAdicional[] = [];
     for (const item of dto.items) {
+      const indumentaria = await this.indumentariaRepo.findOne({ where: { id: item.indumentaria_id } });
+      if (!indumentaria) throw new NotFoundException(`Item de indumentaria ${item.indumentaria_id} no encontrado`);
+
       items.push(
         await this.rqItemRepo.save(
           this.rqItemRepo.create({
             requisicion_id:   rq.id,
             categoria:        CategoriaInsumo.DOTACION,
-            codigo:           item.codigo ?? null,
-            descripcion:      item.descripcion,
-            unidad:           item.unidad,
+            indumentaria_id:  indumentaria.id,
+            codigo:           indumentaria.codigo,
+            descripcion:      indumentaria.nombre,
+            unidad:           indumentaria.unidad,
             tipo_requisicion: item.tipo_requisicion,
-            valor_unitario:   item.valor_unitario ?? null,
+            valor_unitario:   item.valor_unitario,
             solicitado:       item.solicitado,
           }),
         ),

@@ -8,6 +8,7 @@ import { Employee } from '../employees/entities/employee.entity';
 import { Field } from '../fields/entities/field.entity';
 import { Requisicion } from '../../consumables/entities/requisicion.entity';
 import { RequisicionItemAdicional } from '../../consumables/entities/requisicion-item-adicional.entity';
+import { Indumentaria } from '../indumentaria/entities/indumentaria.entity';
 import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
 import { DotacionesService } from './dotaciones.service';
 import { DotacionesController } from './dotaciones.controller';
@@ -23,6 +24,7 @@ import { DotacionesController } from './dotaciones.controller';
       Field,
       Requisicion,
       RequisicionItemAdicional,
+      Indumentaria,
     ]),
   ],
   controllers: [DotacionesController],

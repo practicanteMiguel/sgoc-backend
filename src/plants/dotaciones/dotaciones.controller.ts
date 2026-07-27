@@ -52,9 +52,8 @@ export class DotacionesController {
   }
 
   @Patch('solicitudes/:id/estado')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'coordinator')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({ summary: 'Cambiar estado de una solicitud (emitida -> autorizada -> generada -> entregada)' })
   updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDotacionDto) {
     return this.service.updateEstado(id, dto);

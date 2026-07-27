@@ -4,6 +4,7 @@ import {
 } from 'typeorm';
 import { Requisicion } from './requisicion.entity';
 import { CategoriaInsumo } from './insumo.entity';
+import { Indumentaria } from '../../plants/indumentaria/entities/indumentaria.entity';
 
 @Entity('requisicion_adicionales')
 export class RequisicionItemAdicional {
@@ -19,6 +20,13 @@ export class RequisicionItemAdicional {
 
   @Column({ type: 'enum', enum: CategoriaInsumo })
   categoria!: CategoriaInsumo;
+
+  @ManyToOne(() => Indumentaria, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'indumentaria_id' })
+  indumentaria!: Indumentaria | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  indumentaria_id!: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   codigo!: string | null;
