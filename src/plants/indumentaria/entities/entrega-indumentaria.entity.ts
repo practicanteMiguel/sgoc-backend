@@ -17,9 +17,15 @@ export class EntregaIndumentaria {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ type: 'uuid' })
+  empleado_id!: string;
+
   @ManyToOne(() => Employee, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'empleado_id' })
   empleado!: Employee;
+
+  @Column({ type: 'uuid' })
+  indumentaria_id!: string;
 
   @ManyToOne(() => Indumentaria, { nullable: false })
   @JoinColumn({ name: 'indumentaria_id' })
@@ -30,6 +36,9 @@ export class EntregaIndumentaria {
 
   @Column({ type: 'int', default: 1 })
   cantidad!: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  talla!: string | null;
 
   @Column({ type: 'date' })
   fecha_entrega!: Date;
@@ -45,6 +54,9 @@ export class EntregaIndumentaria {
 
   @Column({ type: 'varchar', nullable: true })
   numero_rq!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  firma_url!: string | null;
 
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'registrado_por_id' })

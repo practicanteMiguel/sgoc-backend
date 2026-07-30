@@ -58,6 +58,15 @@ export class SolicitudDotacion {
   @Column({ nullable: true, type: 'varchar' })
   cargo_autorizador!: string | null;
 
+  @Column({ nullable: true, type: 'timestamptz' })
+  fecha_autorizacion!: Date | null;
+
+  @Column({ nullable: true, type: 'int' })
+  numero_rq!: number | null;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  fecha_solicitud_compras!: Date | null;
+
   @OneToMany(() => ReposicionDotacion, (r) => r.solicitud, { cascade: true })
   reposiciones!: ReposicionDotacion[];
 

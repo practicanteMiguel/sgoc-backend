@@ -1,7 +1,9 @@
 import {
   Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseIntPipe, UseGuards,
+  UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiHeader } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiQuery, ApiHeader, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -14,6 +16,7 @@ import {
   UpdateEstadoDto,
   UpdateFacturasDto,
   RecepcionDto,
+  ConfirmarRecepcionDotacionDto,
 } from './dto/create-requisicion.dto';
 
 @ApiTags('Requisiciones')
@@ -106,6 +109,21 @@ export class RequisicionesController {
     @CurrentUser('id') userId: string,
   ) {
     return this.service.confirmarRecepcion(id, dto, userId);
+  }
+
+  @Patch(':id/recepcion-dotacion')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('firma'))
+  @ApiOperation({ summary: 'Compras confirma recepcion de una RQ de dotacion: cantidades por item y firma de quien recibe. Cambia estado a ENTREGADO.' })
+  confirmarRecepcionDotacion(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: ConfirmarRecepcionDotacionDto,
+  ) {
+    if (!file) throw new BadRequestException('Se requiere la imagen de la firma');
+    return this.service.confirmarRecepcionDotacion(id, file, dto);
   }
 
   @Delete(':id')

@@ -26,6 +26,9 @@ export class Indumentaria {
   @Column({ default: true })
   activo!: boolean;
 
+  @Column({ default: false })
+  requiere_talla!: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 

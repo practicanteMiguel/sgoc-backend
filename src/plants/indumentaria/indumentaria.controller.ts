@@ -1,14 +1,16 @@
 import {
   Controller, Get, Post, Patch, Delete,
   Param, Body, Query, UseGuards,
+  UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth, ApiHeader, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { ApiKeyGuard } from '../../auth/guards/api-key.guard';
 import { IndumentariaService } from './indumentaria.service';
-import { CreateIndumentariaDto, UpdateIndumentariaDto, CreateEntregaDto } from './dto/indumentaria.dto';
+import { CreateIndumentariaDto, UpdateIndumentariaDto, CreateEntregaDto, RegistrarEntregaBatchDto } from './dto/indumentaria.dto';
 import { TipoEntrega } from './entities/entrega-indumentaria.entity';
 
 @ApiTags('Indumentaria')
@@ -19,9 +21,8 @@ export class IndumentariaController {
   // --- Catalogo ---
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
-  @ApiBearerAuth()
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso publico' })
   @ApiOperation({ summary: 'Crear item de indumentaria. El codigo se genera automaticamente (IND-001...)' })
   create(@Body() dto: CreateIndumentariaDto) {
     return this.service.create(dto);
@@ -41,31 +42,9 @@ export class IndumentariaController {
     return this.service.findAll(+page, +limit, search, activoFlag);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Obtener item de indumentaria por id' })
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
-  }
-
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Actualizar item de indumentaria' })
-  update(@Param('id') id: string, @Body() dto: UpdateIndumentariaDto) {
-    return this.service.update(id, dto);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Eliminar item de indumentaria' })
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
-  }
-
   // --- Entregas / Historial ---
+  // Nota: estas rutas de literal deben ir antes de ':id' para que Nest no las
+  // confunda con el parametro de ruta del catalogo (ej. GET /entregas).
 
   @Post('entregas')
   @UseGuards(ApiKeyGuard)
@@ -73,6 +52,20 @@ export class IndumentariaController {
   @ApiOperation({ summary: 'Registrar entrega de indumentaria a un empleado (tocacion o reposicion)' })
   registrarEntrega(@Body() dto: CreateEntregaDto) {
     return this.service.registrarEntrega(dto);
+  }
+
+  @Post('entregas/batch')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso publico' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('firma'))
+  @ApiOperation({ summary: 'Registrar varias entregas de indumentaria a un empleado en un solo lote, con la firma de quien recibe' })
+  registrarEntregaBatch(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: RegistrarEntregaBatchDto,
+  ) {
+    if (!file) throw new BadRequestException('Se requiere la imagen de la firma');
+    return this.service.registrarEntregaBatch(file, dto);
   }
 
   @Get('entregas/historial/:empleadoId')
@@ -88,16 +81,18 @@ export class IndumentariaController {
   }
 
   @Get('entregas')
-  @ApiOperation({ summary: 'Listar todas las entregas. Filtrar por tipo o item de indumentaria' })
+  @ApiOperation({ summary: 'Listar todas las entregas. Filtrar por tipo, item de indumentaria o numero de RQ' })
   @ApiQuery({ name: 'tipo', enum: TipoEntrega, required: false })
   @ApiQuery({ name: 'indumentariaId', required: false })
+  @ApiQuery({ name: 'numeroRq', required: false })
   getEntregas(
     @Query('page')            page = 1,
     @Query('limit')           limit = 50,
     @Query('tipo')            tipo?: TipoEntrega,
     @Query('indumentariaId')  indumentariaId?: string,
+    @Query('numeroRq')        numeroRq?: string,
   ) {
-    return this.service.getEntregas(+page, +limit, tipo, indumentariaId);
+    return this.service.getEntregas(+page, +limit, tipo, indumentariaId, numeroRq);
   }
 
   @Delete('entregas/:id')
@@ -107,5 +102,27 @@ export class IndumentariaController {
   @ApiOperation({ summary: 'Eliminar registro de entrega' })
   removeEntrega(@Param('id') id: string) {
     return this.service.removeEntrega(id);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener item de indumentaria por id' })
+  findOne(@Param('id') id: string) {
+    return this.service.findOne(id);
+  }
+
+  @Patch(':id')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso publico' })
+  @ApiOperation({ summary: 'Actualizar item de indumentaria' })
+  update(@Param('id') id: string, @Body() dto: UpdateIndumentariaDto) {
+    return this.service.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(ApiKeyGuard)
+  @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso publico' })
+  @ApiOperation({ summary: 'Eliminar item de indumentaria' })
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 }

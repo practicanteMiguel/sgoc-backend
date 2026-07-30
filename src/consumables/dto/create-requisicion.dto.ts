@@ -125,6 +125,24 @@ export class RecepcionDto {
   items!: ItemRecepcionDto[];
 }
 
+export class ConfirmarRecepcionDotacionDto {
+  @ApiProperty({ example: '2026-05-26' })
+  @IsString() @IsNotEmpty()
+  fecha_entrega!: string;
+
+  @ApiProperty({ description: 'Nombre de quien recibe la dotacion' })
+  @IsString() @IsNotEmpty()
+  nombre_receptor!: string;
+
+  @ApiProperty({ description: 'Cargo de quien recibe la dotacion' })
+  @IsString() @IsNotEmpty()
+  cargo_receptor!: string;
+
+  @ApiProperty({ description: 'JSON stringificado de [{ id, recibido }]' })
+  @IsString() @IsNotEmpty()
+  items!: string;
+}
+
 export class LlenadoSupervisorDto {
   @ApiProperty()
   @IsString() @IsNotEmpty()

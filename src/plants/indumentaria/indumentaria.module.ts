@@ -4,6 +4,7 @@ import { Indumentaria } from './entities/indumentaria.entity';
 import { EntregaIndumentaria } from './entities/entrega-indumentaria.entity';
 import { Employee } from '../employees/entities/employee.entity';
 import { User } from '../../users/entities/user.entity';
+import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
 import { IndumentariaService } from './indumentaria.service';
 import { IndumentariaController } from './indumentaria.controller';
 
@@ -12,7 +13,7 @@ import { IndumentariaController } from './indumentaria.controller';
     TypeOrmModule.forFeature([Indumentaria, EntregaIndumentaria, Employee, User]),
   ],
   controllers: [IndumentariaController],
-  providers: [IndumentariaService],
+  providers: [IndumentariaService, CloudinaryService],
   exports: [TypeOrmModule, IndumentariaService],
 })
 export class IndumentariaModule {}

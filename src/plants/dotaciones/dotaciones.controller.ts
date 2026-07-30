@@ -168,6 +168,14 @@ las del indice 1 en "imagenes_1", etc.
       }
     }
 
+    reposicionesData.forEach((r, idx) => {
+      if (!(filesByIndex[idx] ?? []).length) {
+        throw new BadRequestException(
+          `La reposicion de ${r.empleado_id ?? `indice ${idx}`} requiere al menos una foto de evidencia`,
+        );
+      }
+    });
+
     return this.service.createSolicitud(
       token,
       {

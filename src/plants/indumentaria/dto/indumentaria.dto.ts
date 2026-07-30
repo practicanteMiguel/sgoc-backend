@@ -17,6 +17,10 @@ export class CreateIndumentariaDto {
   @IsOptional()
   @IsString()
   unidad?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  requiere_talla?: boolean;
 }
 
 export class UpdateIndumentariaDto extends PartialType(CreateIndumentariaDto) {
@@ -62,4 +66,26 @@ export class CreateEntregaDto {
   @IsOptional()
   @IsUUID()
   registrado_por_id?: string | null;
+}
+
+export class RegistrarEntregaBatchDto {
+  @IsUUID()
+  empleado_id!: string;
+
+  @IsEnum(TipoEntrega)
+  tipo!: TipoEntrega;
+
+  @IsDateString()
+  fecha_entrega!: string;
+
+  @IsOptional()
+  @IsString()
+  numero_rq?: string | null;
+
+  @IsOptional()
+  @IsString()
+  observacion?: string | null;
+
+  @IsString()
+  items!: string;
 }

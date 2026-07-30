@@ -1,15 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Indumentaria } from './entities/indumentaria.entity';
 import { EntregaIndumentaria, TipoEntrega } from './entities/entrega-indumentaria.entity';
-import { CreateIndumentariaDto, UpdateIndumentariaDto, CreateEntregaDto } from './dto/indumentaria.dto';
+import { CreateIndumentariaDto, UpdateIndumentariaDto, CreateEntregaDto, RegistrarEntregaBatchDto } from './dto/indumentaria.dto';
+import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
 
 @Injectable()
 export class IndumentariaService {
   constructor(
     @InjectRepository(Indumentaria) private repo: Repository<Indumentaria>,
     @InjectRepository(EntregaIndumentaria) private entregaRepo: Repository<EntregaIndumentaria>,
+    private cloudinary: CloudinaryService,
   ) {}
 
   private async generarCodigo(): Promise<string> {
@@ -80,6 +82,34 @@ export class IndumentariaService {
     return this.entregaRepo.save(entrega);
   }
 
+  async registrarEntregaBatch(file: Express.Multer.File, dto: RegistrarEntregaBatchDto) {
+    let items: { indumentaria_id: string; cantidad: number; talla?: string | null }[];
+    try {
+      items = JSON.parse(dto.items);
+    } catch {
+      throw new BadRequestException('El campo items debe ser un JSON valido');
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new BadRequestException('Se requiere al menos un item');
+    }
+
+    const { url } = await this.cloudinary.uploadFull(file, `indumentaria/entregas/${dto.empleado_id}`);
+
+    const entregas = items.map(item => this.entregaRepo.create({
+      empleado:      { id: dto.empleado_id } as any,
+      indumentaria:  { id: item.indumentaria_id } as any,
+      tipo:          dto.tipo,
+      cantidad:      item.cantidad,
+      talla:         item.talla ?? null,
+      fecha_entrega: dto.fecha_entrega as unknown as Date,
+      observacion:   dto.observacion ?? null,
+      numero_rq:     dto.numero_rq ?? null,
+      firma_url:     url,
+    }))
+
+    return this.entregaRepo.save(entregas);
+  }
+
   async getHistorialEmpleado(empleadoId: string, page = 1, limit = 50, tipo?: TipoEntrega) {
     const qb = this.entregaRepo
       .createQueryBuilder('e')
@@ -96,7 +126,7 @@ export class IndumentariaService {
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
-  async getEntregas(page = 1, limit = 50, tipo?: TipoEntrega, indumentariaId?: string) {
+  async getEntregas(page = 1, limit = 50, tipo?: TipoEntrega, indumentariaId?: string, numeroRq?: string) {
     const qb = this.entregaRepo
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.empleado', 'emp')
@@ -108,6 +138,7 @@ export class IndumentariaService {
 
     if (tipo) qb.andWhere('e.tipo = :tipo', { tipo });
     if (indumentariaId) qb.andWhere('e.indumentaria_id = :indumentariaId', { indumentariaId });
+    if (numeroRq) qb.andWhere('e.numero_rq = :numeroRq', { numeroRq });
 
     const [data, total] = await qb.getManyAndCount();
     return { data, total, page, limit, pages: Math.ceil(total / limit) };

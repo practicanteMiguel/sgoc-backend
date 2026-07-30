@@ -55,6 +55,12 @@ export class Requisicion {
   @Column({ type: 'text', nullable: true })
   firma_recepcion_url!: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  nombre_receptor!: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  cargo_receptor!: string | null;
+
   @Column({ default: false })
   recepcion_completada!: boolean;
 

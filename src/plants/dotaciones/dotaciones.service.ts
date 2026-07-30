@@ -46,7 +46,15 @@ export class DotacionesService {
       where: { supervisor: { id: user.id } },
       relations: ['field', 'supervisor'],
     });
-    if (existing) return existing;
+    if (existing) {
+      if (existing.field.id !== user.field_id) {
+        const field = await this.fieldRepo.findOne({ where: { id: user.field_id } });
+        if (!field) throw new NotFoundException('Campo no encontrado');
+        existing.field = field;
+        return this.spaceRepo.save(existing);
+      }
+      return existing;
+    }
 
     const field = await this.fieldRepo.findOne({ where: { id: user.field_id } });
     if (!field) throw new NotFoundException('Campo no encontrado');
@@ -240,7 +248,8 @@ export class DotacionesService {
       );
     }
 
-    solicitud.estado = EstadoSolicitudDotacion.GENERADA;
+    solicitud.estado    = EstadoSolicitudDotacion.GENERADA;
+    solicitud.numero_rq = dto.numero_rq;
     await this.solicitudRepo.save(solicitud);
 
     return { ...rq, items };
@@ -273,6 +282,7 @@ export class DotacionesService {
     solicitud.firma_autorizador_url  = url;
     solicitud.nombre_autorizador     = dto.nombre_autorizador;
     solicitud.cargo_autorizador      = dto.cargo_autorizador;
+    solicitud.fecha_autorizacion     = new Date();
     return this.solicitudRepo.save(solicitud);
   }
 }

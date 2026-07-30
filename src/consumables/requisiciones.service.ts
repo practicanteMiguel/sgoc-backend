@@ -11,6 +11,7 @@ import { SolicitudDotacion, EstadoSolicitudDotacion } from '../plants/dotaciones
 import { Field } from '../plants/fields/entities/field.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
+import { CloudinaryService } from '../plants/activities/cloudinary/cloudinary.service';
 import { computeEntregaTotalesBatch } from './utils/rq-entrega-totales.util';
 import {
   CreateRequisicionDto,
@@ -20,6 +21,7 @@ import {
   UpdateEstadoDto,
   UpdateFacturasDto,
   RecepcionDto,
+  ConfirmarRecepcionDotacionDto,
 } from './dto/create-requisicion.dto';
 
 const MESES = [
@@ -39,6 +41,7 @@ export class RequisicionesService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(SolicitudDotacion) private solicitudDotacionRepo: Repository<SolicitudDotacion>,
     private notificationsService: NotificationsService,
+    private cloudinary: CloudinaryService,
   ) {}
 
   private async assertNumeroUnico(numero: number) {
@@ -279,6 +282,7 @@ export class RequisicionesService {
       id: item.id,
       es_adicional: false,
       insumo_id: item.insumo_id,
+      indumentaria_id: null as string | null,
       codigo: item.insumo.codigo,
       descripcion: item.insumo.descripcion,
       unidad: item.insumo.unidad,
@@ -300,7 +304,8 @@ export class RequisicionesService {
       id: a.id,
       es_adicional: true,
       insumo_id: null as string | null,
-      codigo: 'ADC' as string | null,
+      indumentaria_id: a.indumentaria_id,
+      codigo: a.codigo ?? 'ADC',
       descripcion: a.descripcion,
       unidad: a.unidad,
       valor_unitario: a.valor_unitario,
@@ -352,6 +357,8 @@ export class RequisicionesService {
       recepcion_completada: rq.recepcion_completada,
       fecha_entrega: rq.fecha_entrega,
       firma_recepcion_url: rq.firma_recepcion_url,
+      nombre_receptor: rq.nombre_receptor,
+      cargo_receptor: rq.cargo_receptor,
       total_general,
       total_solicitado,
       total_recibido,
@@ -366,6 +373,7 @@ export class RequisicionesService {
         total_recibido: Number(e.total_recibido),
       })),
       items: allItems,
+      solicitud_id: rq.solicitud_id,
       created_at: rq.created_at,
       updated_at: rq.updated_at,
     };
@@ -414,6 +422,18 @@ export class RequisicionesService {
       await this.solicitudDotacionRepo.update(
         { id: rq.solicitud_id },
         { estado: EstadoSolicitudDotacion.ENTREGADA },
+      );
+    }
+
+    if (
+      estadoAnterior === EstadoRequisicion.APROBADA &&
+      dto.estado === EstadoRequisicion.PEDIDO_REALIZADO &&
+      rq.categoria === CategoriaInsumo.DOTACION &&
+      rq.solicitud_id
+    ) {
+      await this.solicitudDotacionRepo.update(
+        { id: rq.solicitud_id },
+        { fecha_solicitud_compras: new Date() },
       );
     }
 
@@ -496,6 +516,58 @@ export class RequisicionesService {
       fecha_entrega: dto.fecha_entrega,
       firma_url: user.firma_url,
       usuario_id: userId,
+      total_solicitado,
+      total_recibido,
+      entrega_completa: total_solicitado === total_recibido,
+    }));
+
+    return this.findOne(id);
+  }
+
+  async confirmarRecepcionDotacion(id: string, file: Express.Multer.File, dto: ConfirmarRecepcionDotacionDto) {
+    const rq = await this.rqRepo.findOne({ where: { id } });
+    if (!rq) throw new NotFoundException('Requisicion no encontrada');
+    if (rq.categoria !== CategoriaInsumo.DOTACION) {
+      throw new BadRequestException('Este endpoint es solo para requisiciones de dotacion');
+    }
+
+    let items: { id: string; recibido: number }[];
+    try {
+      items = JSON.parse(dto.items);
+    } catch {
+      throw new BadRequestException('El campo items debe ser un JSON valido');
+    }
+
+    for (const item of items) {
+      await this.rqAdicionalRepo.update(item.id, { recibido: item.recibido });
+    }
+
+    // Snapshot de totales tras aplicar los recibido de esta ronda, para el evento de historial
+    const { total_solicitado, total_recibido } = await this.findOne(id);
+
+    const { url } = await this.cloudinary.uploadFull(file, `requisiciones/${id}/recepcion`);
+
+    await this.rqRepo.update(id, {
+      fecha_entrega: dto.fecha_entrega,
+      firma_recepcion_url: url,
+      nombre_receptor: dto.nombre_receptor,
+      cargo_receptor: dto.cargo_receptor,
+      recepcion_completada: true,
+      estado: EstadoRequisicion.ENTREGADO,
+    });
+
+    if (rq.solicitud_id) {
+      await this.solicitudDotacionRepo.update(
+        { id: rq.solicitud_id },
+        { estado: EstadoSolicitudDotacion.ENTREGADA },
+      );
+    }
+
+    await this.eventoRepo.save(this.eventoRepo.create({
+      requisicion_id: id,
+      fecha_entrega: dto.fecha_entrega,
+      firma_url: url,
+      usuario_id: null,
       total_solicitado,
       total_recibido,
       entrega_completa: total_solicitado === total_recibido,
