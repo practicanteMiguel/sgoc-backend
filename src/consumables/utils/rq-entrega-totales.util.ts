@@ -6,6 +6,7 @@ import { RequisicionEntregaEvento } from '../entities/requisicion-entrega-evento
 export interface EntregaTotales {
   total_solicitado: number;
   total_recibido: number;
+  total_general: number;
   entrega_completa: boolean | null;
   tiene_faltante: boolean;
   items_pendientes: number;
@@ -17,6 +18,7 @@ interface SumRow {
   solicitado: string | null;
   recibido: string | null;
   faltantes_count: string | null;
+  total_general: string | null;
 }
 
 /**
@@ -37,19 +39,36 @@ export async function computeEntregaTotalesBatch(
   if (rqIds.length === 0) return result;
 
   const [itemSums, adicionalSums, eventos] = await Promise.all([
-    itemRepo.createQueryBuilder('i')
+    itemRepo
+      .createQueryBuilder('i')
+      .leftJoin('i.insumo', 'insumo')
       .select('i.requisicion_id', 'requisicion_id')
       .addSelect('SUM(COALESCE(i.solicitado,0))', 'solicitado')
       .addSelect('SUM(COALESCE(i.recibido,0))', 'recibido')
-      .addSelect('SUM(CASE WHEN COALESCE(i.recibido,0) < COALESCE(i.solicitado,0) THEN 1 ELSE 0 END)', 'faltantes_count')
+      .addSelect(
+        'SUM(CASE WHEN COALESCE(i.recibido,0) < COALESCE(i.solicitado,0) THEN 1 ELSE 0 END)',
+        'faltantes_count',
+      )
+      .addSelect(
+        'SUM(COALESCE(i.solicitado,0) * COALESCE(insumo.valor_unitario,0))',
+        'total_general',
+      )
       .where('i.requisicion_id IN (:...ids)', { ids: rqIds })
       .groupBy('i.requisicion_id')
       .getRawMany<SumRow>(),
-    adicionalRepo.createQueryBuilder('a')
+    adicionalRepo
+      .createQueryBuilder('a')
       .select('a.requisicion_id', 'requisicion_id')
       .addSelect('SUM(COALESCE(a.solicitado,0))', 'solicitado')
       .addSelect('SUM(COALESCE(a.recibido,0))', 'recibido')
-      .addSelect('SUM(CASE WHEN COALESCE(a.recibido,0) < COALESCE(a.solicitado,0) THEN 1 ELSE 0 END)', 'faltantes_count')
+      .addSelect(
+        'SUM(CASE WHEN COALESCE(a.recibido,0) < COALESCE(a.solicitado,0) THEN 1 ELSE 0 END)',
+        'faltantes_count',
+      )
+      .addSelect(
+        'SUM(COALESCE(a.solicitado,0) * COALESCE(a.valor_unitario,0))',
+        'total_general',
+      )
       .where('a.requisicion_id IN (:...ids)', { ids: rqIds })
       .groupBy('a.requisicion_id')
       .getRawMany<SumRow>(),
@@ -66,23 +85,45 @@ export async function computeEntregaTotalesBatch(
     }
   }
 
-  const acumulado = new Map<string, { solicitado: number; recibido: number; faltantes: number }>();
+  const acumulado = new Map<
+    string,
+    {
+      solicitado: number;
+      recibido: number;
+      faltantes: number;
+      total_general: number;
+    }
+  >();
   for (const row of [...itemSums, ...adicionalSums]) {
-    const prev = acumulado.get(row.requisicion_id) ?? { solicitado: 0, recibido: 0, faltantes: 0 };
+    const prev = acumulado.get(row.requisicion_id) ?? {
+      solicitado: 0,
+      recibido: 0,
+      faltantes: 0,
+      total_general: 0,
+    };
     acumulado.set(row.requisicion_id, {
       solicitado: prev.solicitado + Number(row.solicitado ?? 0),
-      recibido:   prev.recibido   + Number(row.recibido   ?? 0),
-      faltantes:  prev.faltantes  + Number(row.faltantes_count ?? 0),
+      recibido: prev.recibido + Number(row.recibido ?? 0),
+      faltantes: prev.faltantes + Number(row.faltantes_count ?? 0),
+      total_general: prev.total_general + Number(row.total_general ?? 0),
     });
   }
 
   for (const id of rqIds) {
-    const sums = acumulado.get(id) ?? { solicitado: 0, recibido: 0, faltantes: 0 };
+    const sums = acumulado.get(id) ?? {
+      solicitado: 0,
+      recibido: 0,
+      faltantes: 0,
+      total_general: 0,
+    };
     const recepcionCompletada = recepcionCompletadaMap.get(id) ?? false;
     result.set(id, {
       total_solicitado: sums.solicitado,
       total_recibido: sums.recibido,
-      entrega_completa: recepcionCompletada ? sums.solicitado === sums.recibido : null,
+      total_general: sums.total_general,
+      entrega_completa: recepcionCompletada
+        ? sums.solicitado === sums.recibido
+        : null,
       tiene_faltante: recepcionCompletada && sums.faltantes > 0,
       items_pendientes: sums.faltantes,
       fecha_primera_entrega: primeraEntregaPorRq.get(id) ?? null,

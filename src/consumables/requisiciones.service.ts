@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
@@ -7,7 +12,10 @@ import { RequisicionItem } from './entities/requisicion-item.entity';
 import { RequisicionItemAdicional } from './entities/requisicion-item-adicional.entity';
 import { RequisicionEntregaEvento } from './entities/requisicion-entrega-evento.entity';
 import { Insumo, CategoriaInsumo } from './entities/insumo.entity';
-import { SolicitudDotacion, EstadoSolicitudDotacion } from '../plants/dotaciones/entities/solicitud-dotacion.entity';
+import {
+  SolicitudDotacion,
+  EstadoSolicitudDotacion,
+} from '../plants/dotaciones/entities/solicitud-dotacion.entity';
 import { Field } from '../plants/fields/entities/field.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../notifications/entities/enum/notification-priority.enum';
@@ -25,21 +33,35 @@ import {
 } from './dto/create-requisicion.dto';
 
 const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
 ];
 
 @Injectable()
 export class RequisicionesService {
   constructor(
     @InjectRepository(Requisicion) private rqRepo: Repository<Requisicion>,
-    @InjectRepository(RequisicionItem) private itemRepo: Repository<RequisicionItem>,
-    @InjectRepository(RequisicionItemAdicional) private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
-    @InjectRepository(RequisicionEntregaEvento) private eventoRepo: Repository<RequisicionEntregaEvento>,
+    @InjectRepository(RequisicionItem)
+    private itemRepo: Repository<RequisicionItem>,
+    @InjectRepository(RequisicionItemAdicional)
+    private rqAdicionalRepo: Repository<RequisicionItemAdicional>,
+    @InjectRepository(RequisicionEntregaEvento)
+    private eventoRepo: Repository<RequisicionEntregaEvento>,
     @InjectRepository(Insumo) private insumoRepo: Repository<Insumo>,
     @InjectRepository(Field) private fieldRepo: Repository<Field>,
     @InjectRepository(User) private userRepo: Repository<User>,
-    @InjectRepository(SolicitudDotacion) private solicitudDotacionRepo: Repository<SolicitudDotacion>,
+    @InjectRepository(SolicitudDotacion)
+    private solicitudDotacionRepo: Repository<SolicitudDotacion>,
     private notificationsService: NotificationsService,
     private cloudinary: CloudinaryService,
   ) {}
@@ -48,7 +70,7 @@ export class RequisicionesService {
     const existe = await this.rqRepo.findOne({ where: { numero_rq: numero } });
     if (existe) {
       throw new ConflictException({
-        message:      `El número de RQ ${numero} ya está en uso`,
+        message: `El número de RQ ${numero} ya está en uso`,
         rq_conflicto: { id: existe.id, numero_rq: existe.numero_rq },
       });
     }
@@ -69,8 +91,12 @@ export class RequisicionesService {
       order: { codigo: 'ASC' },
     });
 
-    const items = insumos.map(insumo =>
-      this.itemRepo.create({ requisicion_id: saved.id, insumo_id: insumo.id, solicitado: null }),
+    const items = insumos.map((insumo) =>
+      this.itemRepo.create({
+        requisicion_id: saved.id,
+        insumo_id: insumo.id,
+        solicitado: null,
+      }),
     );
     await this.itemRepo.save(items);
 
@@ -111,8 +137,12 @@ export class RequisicionesService {
         }),
       );
 
-      const items = insumos.map(insumo =>
-        this.itemRepo.create({ requisicion_id: rq.id, insumo_id: insumo.id, solicitado: null }),
+      const items = insumos.map((insumo) =>
+        this.itemRepo.create({
+          requisicion_id: rq.id,
+          insumo_id: insumo.id,
+          solicitado: null,
+        }),
       );
       await this.itemRepo.save(items);
 
@@ -141,25 +171,32 @@ export class RequisicionesService {
       .orderBy('r.created_at', 'DESC');
 
     if (mes !== undefined && anio !== undefined) {
-      qb.leftJoin('solicitudes', 's', 's.id = r.solicitud_id')
-        .where(
-          '(r.solicitud_id IS NOT NULL AND s.mes = :mes AND s.anio = :anio) OR ' +
+      qb.leftJoin('solicitudes', 's', 's.id = r.solicitud_id').where(
+        '(r.solicitud_id IS NOT NULL AND s.mes = :mes AND s.anio = :anio) OR ' +
           '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio) OR ' +
           '(r.categoria = :catDot AND EXTRACT(MONTH FROM COALESCE(r.fecha, r.created_at::date)) = :mes AND EXTRACT(YEAR FROM COALESCE(r.fecha, r.created_at::date)) = :anio)',
-          { mes, anio, catDot: CategoriaInsumo.DOTACION },
-        );
+        { mes, anio, catDot: CategoriaInsumo.DOTACION },
+      );
     }
 
     const rqs = await qb.getMany();
-    const recepcionCompletadaMap = new Map(rqs.map(r => [r.id, r.recepcion_completada]));
-    const totales = await computeEntregaTotalesBatch(
-      this.itemRepo, this.rqAdicionalRepo, this.eventoRepo,
-      rqs.map(r => r.id), recepcionCompletadaMap,
+    const recepcionCompletadaMap = new Map(
+      rqs.map((r) => [r.id, r.recepcion_completada]),
     );
-    return rqs.map(r => {
+    const totales = await computeEntregaTotalesBatch(
+      this.itemRepo,
+      this.rqAdicionalRepo,
+      this.eventoRepo,
+      rqs.map((r) => r.id),
+      recepcionCompletadaMap,
+    );
+    return rqs.map((r) => {
       const t = totales.get(r.id);
       return {
-        ...r, mes, anio, ...t,
+        ...r,
+        mes,
+        anio,
+        ...t,
         fecha_primera_entrega: t?.fecha_primera_entrega ?? r.fecha_entrega,
       };
     });
@@ -173,8 +210,8 @@ export class RequisicionesService {
       .leftJoin('solicitudes', 's', 's.id = r.solicitud_id')
       .where(
         '(r.solicitud_id IS NOT NULL AND s.mes = :mes AND s.anio = :anio) OR ' +
-        '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio) OR ' +
-        '(r.categoria = :catDot AND EXTRACT(MONTH FROM COALESCE(r.fecha, r.created_at::date)) = :mes AND EXTRACT(YEAR FROM COALESCE(r.fecha, r.created_at::date)) = :anio)',
+          '(r.solicitud_id IS NULL AND EXTRACT(MONTH FROM r.created_at) = :mes AND EXTRACT(YEAR FROM r.created_at) = :anio) OR ' +
+          '(r.categoria = :catDot AND EXTRACT(MONTH FROM COALESCE(r.fecha, r.created_at::date)) = :mes AND EXTRACT(YEAR FROM COALESCE(r.fecha, r.created_at::date)) = :anio)',
         { mes, anio, catDot: CategoriaInsumo.DOTACION },
       )
       .orderBy('r.lugar', 'ASC')
@@ -182,7 +219,7 @@ export class RequisicionesService {
       .addOrderBy('insumo.codigo', 'ASC')
       .getMany();
 
-    const rqIds = rqs.map(r => r.id);
+    const rqIds = rqs.map((r) => r.id);
     const todosAdicionales = rqIds.length
       ? await this.rqAdicionalRepo
           .createQueryBuilder('a')
@@ -228,7 +265,9 @@ export class RequisicionesService {
         });
       }
 
-      for (const a of todosAdicionales.filter(x => x.requisicion_id === rq.id)) {
+      for (const a of todosAdicionales.filter(
+        (x) => x.requisicion_id === rq.id,
+      )) {
         const estimado =
           a.solicitado !== null && a.valor_unitario !== null
             ? Number(a.solicitado) * Number(a.valor_unitario)
@@ -272,13 +311,15 @@ export class RequisicionesService {
     });
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
 
-    const adicionales = await this.rqAdicionalRepo.find({ where: { requisicion_id: id } });
+    const adicionales = await this.rqAdicionalRepo.find({
+      where: { requisicion_id: id },
+    });
     const eventos = await this.eventoRepo.find({
       where: { requisicion_id: id },
       order: { created_at: 'ASC' },
     });
 
-    const itemsConTotal = rq.items.map(item => ({
+    const itemsConTotal = rq.items.map((item) => ({
       id: item.id,
       es_adicional: false,
       insumo_id: item.insumo_id,
@@ -300,7 +341,7 @@ export class RequisicionesService {
           : null,
     }));
 
-    const adicionalesConTotal = adicionales.map(a => ({
+    const adicionalesConTotal = adicionales.map((a) => ({
       id: a.id,
       es_adicional: true,
       insumo_id: null as string | null,
@@ -329,15 +370,19 @@ export class RequisicionesService {
     );
 
     const total_solicitado = allItems.reduce(
-      (sum, i) => (i.solicitado !== null ? sum + Number(i.solicitado) : sum), 0,
+      (sum, i) => (i.solicitado !== null ? sum + Number(i.solicitado) : sum),
+      0,
     );
     const total_recibido = allItems.reduce(
-      (sum, i) => (i.recibido !== null ? sum + Number(i.recibido) : sum), 0,
+      (sum, i) => (i.recibido !== null ? sum + Number(i.recibido) : sum),
+      0,
     );
     const itemsPendientesList = allItems.filter(
-      i => i.solicitado !== null && Number(i.recibido ?? 0) < Number(i.solicitado),
+      (i) =>
+        i.solicitado !== null && Number(i.recibido ?? 0) < Number(i.solicitado),
     );
-    const tiene_faltante = rq.recepcion_completada && itemsPendientesList.length > 0;
+    const tiene_faltante =
+      rq.recepcion_completada && itemsPendientesList.length > 0;
 
     return {
       id: rq.id,
@@ -362,11 +407,13 @@ export class RequisicionesService {
       total_general,
       total_solicitado,
       total_recibido,
-      entrega_completa: rq.recepcion_completada ? total_solicitado === total_recibido : null,
+      entrega_completa: rq.recepcion_completada
+        ? total_solicitado === total_recibido
+        : null,
       tiene_faltante,
       items_pendientes: itemsPendientesList.length,
       fecha_primera_entrega: eventos[0]?.fecha_entrega ?? rq.fecha_entrega,
-      entrega_eventos: eventos.map(e => ({
+      entrega_eventos: eventos.map((e) => ({
         fecha_entrega: e.fecha_entrega,
         entrega_completa: e.entrega_completa,
         total_solicitado: Number(e.total_solicitado),
@@ -400,7 +447,9 @@ export class RequisicionesService {
     await this.rqRepo.save(rq);
 
     for (const itemDto of dto.items) {
-      await this.itemRepo.update(itemDto.id, { solicitado: itemDto.solicitado });
+      await this.itemRepo.update(itemDto.id, {
+        solicitado: itemDto.solicitado,
+      });
     }
 
     return this.findOne(id);
@@ -457,6 +506,20 @@ export class RequisicionesService {
       }
     }
 
+    if (
+      estadoAnterior === EstadoRequisicion.PEDIDO_REALIZADO &&
+      dto.estado === EstadoRequisicion.EN_BODEGA &&
+      rq.creado_por_id
+    ) {
+      await this.notificationsService.createSystem({
+        user_id: rq.creado_por_id,
+        title: 'RQ en bodega',
+        message: `La RQ número ${rq.numero_rq} ya está en bodega.`,
+        priority: NotificationPriority.HIGH,
+        data: { rq_id: rq.id, numero_rq: rq.numero_rq },
+      });
+    }
+
     return { id: rq.id, estado: rq.estado };
   }
 
@@ -464,14 +527,22 @@ export class RequisicionesService {
     const rq = await this.rqRepo.findOne({ where: { id } });
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
 
-    const adicionales = await this.rqAdicionalRepo.find({ where: { requisicion_id: id } });
-    const adicionalIds = new Set(adicionales.map(a => a.id));
+    const adicionales = await this.rqAdicionalRepo.find({
+      where: { requisicion_id: id },
+    });
+    const adicionalIds = new Set(adicionales.map((a) => a.id));
 
     for (const itemDto of dto.items) {
       const patch = {
-        ...(itemDto.numero_factura    !== undefined && { numero_factura:    itemDto.numero_factura }),
-        ...(itemDto.precio_real       !== undefined && { precio_real:       itemDto.precio_real }),
-        ...(itemDto.proveedor_factura !== undefined && { proveedor_factura: itemDto.proveedor_factura }),
+        ...(itemDto.numero_factura !== undefined && {
+          numero_factura: itemDto.numero_factura,
+        }),
+        ...(itemDto.precio_real !== undefined && {
+          precio_real: itemDto.precio_real,
+        }),
+        ...(itemDto.proveedor_factura !== undefined && {
+          proveedor_factura: itemDto.proveedor_factura,
+        }),
       };
       if (adicionalIds.has(itemDto.id) || itemDto.es_adicional) {
         await this.rqAdicionalRepo.update(itemDto.id, patch);
@@ -488,14 +559,21 @@ export class RequisicionesService {
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
-    if (!user?.firma_url) throw new BadRequestException('Debes subir tu firma antes de confirmar la recepcion');
+    if (!user?.firma_url)
+      throw new BadRequestException(
+        'Debes subir tu firma antes de confirmar la recepcion',
+      );
 
-    const adicionales = await this.rqAdicionalRepo.find({ where: { requisicion_id: id } });
-    const adicionalIds = new Set(adicionales.map(a => a.id));
+    const adicionales = await this.rqAdicionalRepo.find({
+      where: { requisicion_id: id },
+    });
+    const adicionalIds = new Set(adicionales.map((a) => a.id));
 
     for (const itemDto of dto.items) {
       if (itemDto.es_adicional || adicionalIds.has(itemDto.id)) {
-        await this.rqAdicionalRepo.update(itemDto.id, { recibido: itemDto.recibido });
+        await this.rqAdicionalRepo.update(itemDto.id, {
+          recibido: itemDto.recibido,
+        });
       } else {
         await this.itemRepo.update(itemDto.id, { recibido: itemDto.recibido });
       }
@@ -511,24 +589,32 @@ export class RequisicionesService {
       estado: EstadoRequisicion.ENTREGADO,
     });
 
-    await this.eventoRepo.save(this.eventoRepo.create({
-      requisicion_id: id,
-      fecha_entrega: dto.fecha_entrega,
-      firma_url: user.firma_url,
-      usuario_id: userId,
-      total_solicitado,
-      total_recibido,
-      entrega_completa: total_solicitado === total_recibido,
-    }));
+    await this.eventoRepo.save(
+      this.eventoRepo.create({
+        requisicion_id: id,
+        fecha_entrega: dto.fecha_entrega,
+        firma_url: user.firma_url,
+        usuario_id: userId,
+        total_solicitado,
+        total_recibido,
+        entrega_completa: total_solicitado === total_recibido,
+      }),
+    );
 
     return this.findOne(id);
   }
 
-  async confirmarRecepcionDotacion(id: string, file: Express.Multer.File, dto: ConfirmarRecepcionDotacionDto) {
+  async confirmarRecepcionDotacion(
+    id: string,
+    file: Express.Multer.File,
+    dto: ConfirmarRecepcionDotacionDto,
+  ) {
     const rq = await this.rqRepo.findOne({ where: { id } });
     if (!rq) throw new NotFoundException('Requisicion no encontrada');
     if (rq.categoria !== CategoriaInsumo.DOTACION) {
-      throw new BadRequestException('Este endpoint es solo para requisiciones de dotacion');
+      throw new BadRequestException(
+        'Este endpoint es solo para requisiciones de dotacion',
+      );
     }
 
     let items: { id: string; recibido: number }[];
@@ -545,7 +631,10 @@ export class RequisicionesService {
     // Snapshot de totales tras aplicar los recibido de esta ronda, para el evento de historial
     const { total_solicitado, total_recibido } = await this.findOne(id);
 
-    const { url } = await this.cloudinary.uploadFull(file, `requisiciones/${id}/recepcion`);
+    const { url } = await this.cloudinary.uploadFull(
+      file,
+      `requisiciones/${id}/recepcion`,
+    );
 
     await this.rqRepo.update(id, {
       fecha_entrega: dto.fecha_entrega,
@@ -563,15 +652,17 @@ export class RequisicionesService {
       );
     }
 
-    await this.eventoRepo.save(this.eventoRepo.create({
-      requisicion_id: id,
-      fecha_entrega: dto.fecha_entrega,
-      firma_url: url,
-      usuario_id: null,
-      total_solicitado,
-      total_recibido,
-      entrega_completa: total_solicitado === total_recibido,
-    }));
+    await this.eventoRepo.save(
+      this.eventoRepo.create({
+        requisicion_id: id,
+        fecha_entrega: dto.fecha_entrega,
+        firma_url: url,
+        usuario_id: null,
+        total_solicitado,
+        total_recibido,
+        entrega_completa: total_solicitado === total_recibido,
+      }),
+    );
 
     return this.findOne(id);
   }

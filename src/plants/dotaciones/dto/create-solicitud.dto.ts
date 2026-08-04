@@ -1,4 +1,14 @@
-import { IsDateString, IsString, IsUUID, IsOptional, IsEnum, IsNumber, IsArray, ValidateNested, ArrayMinSize } from 'class-validator';
+import {
+  IsDateString,
+  IsString,
+  IsUUID,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsArray,
+  ValidateNested,
+  ArrayMinSize,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { EstadoSolicitudDotacion } from '../entities/solicitud-dotacion.entity';
@@ -62,10 +72,63 @@ export class CreateRqDesdeDotacionDto {
   @IsOptional()
   numero_contrato?: string;
 
+  @ApiProperty({
+    required: false,
+    description: 'Centro de costo. Por defecto 45',
+  })
+  @IsNumber()
+  @IsOptional()
+  lote?: number;
+
   // El front puede enviar este campo pero el estado siempre lo controla el backend
   @IsString()
   @IsOptional()
   estado?: string;
+
+  @ApiProperty({ type: [ItemRqDotacionDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => ItemRqDotacionDto)
+  items!: ItemRqDotacionDto[];
+}
+
+export class CreateRqDirectaDto {
+  @ApiProperty()
+  @IsNumber()
+  numero_rq!: number;
+
+  @ApiProperty()
+  @IsString()
+  lugar!: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  observaciones?: string;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  @IsOptional()
+  fecha?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  nombre_solicitante?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  numero_contrato?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Centro de costo. Por defecto 45',
+  })
+  @IsNumber()
+  @IsOptional()
+  lote?: number;
 
   @ApiProperty({ type: [ItemRqDotacionDto] })
   @IsArray()
@@ -115,7 +178,8 @@ export class CreateSolicitudMultipartDto {
   cargo_inspector!: string;
 
   @ApiProperty({
-    description: 'JSON string del array de reposiciones. Ejemplo: [{"empleado_id":"uuid","condicion_encontrada":"..."}]',
+    description:
+      'JSON string del array de reposiciones. Ejemplo: [{"empleado_id":"uuid","condicion_encontrada":"..."}]',
   })
   @IsString()
   reposiciones!: string;

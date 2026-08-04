@@ -1,18 +1,25 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
 } from 'typeorm';
 import { Employee } from '../../employees/entities/employee.entity';
 import { Indumentaria } from './indumentaria.entity';
 import { User } from '../../../users/entities/user.entity';
 
 export enum TipoEntrega {
-  TOCACION   = 'TOCACION',
+  TOCACION = 'TOCACION',
   REPOSICION = 'REPOSICION',
+  PERIODICA = 'PERIODICA',
 }
 
 @Entity('entregas_indumentaria')
+@Index(['empleado_id', 'indumentaria_id', 'fecha_entrega'])
 export class EntregaIndumentaria {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -57,6 +64,9 @@ export class EntregaIndumentaria {
 
   @Column({ type: 'text', nullable: true })
   firma_url!: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  entrega_batch_id!: string | null;
 
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'registrado_por_id' })

@@ -1,10 +1,25 @@
 import {
-  Controller, Get, Post, Patch, Param, Body, Query,
-  UseGuards, UseInterceptors, UploadedFiles, UploadedFile,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiConsumes,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -12,7 +27,14 @@ import { ApiKeyGuard } from '../../auth/guards/api-key.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { DotacionesService } from './dotaciones.service';
-import { CreateSolicitudMultipartDto, CreateReposicionDto, UpdateEstadoDotacionDto, FirmaAutorizadorDto, CreateRqDesdeDotacionDto } from './dto/create-solicitud.dto';
+import {
+  CreateSolicitudMultipartDto,
+  CreateReposicionDto,
+  UpdateEstadoDotacionDto,
+  FirmaAutorizadorDto,
+  CreateRqDesdeDotacionDto,
+  CreateRqDirectaDto,
+} from './dto/create-solicitud.dto';
 import { EstadoSolicitudDotacion } from './entities/solicitud-dotacion.entity';
 
 @ApiTags('Dotaciones')
@@ -26,7 +48,9 @@ export class DotacionesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('supervisor', 'admin', 'coordinator')
-  @ApiOperation({ summary: 'Crear o recuperar el espacio de dotaciones del supervisor' })
+  @ApiOperation({
+    summary: 'Crear o recuperar el espacio de dotaciones del supervisor',
+  })
   createOrGetSpace(@CurrentUser() user: User) {
     return this.service.createOrGetSpace(user);
   }
@@ -40,12 +64,27 @@ export class DotacionesController {
     return this.service.getMySpace(user);
   }
 
+  // --- Autenticado (encargado) ---
+
+  @Post('rq-directa')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary:
+      'Crear una RQ de dotacion directamente, sin una solicitud/reposicion detras (ej. dotacion inicial o periodica)',
+  })
+  crearRqDirecta(@Body() dto: CreateRqDirectaDto, @CurrentUser() user: User) {
+    return this.service.crearRqDirecta(dto, user.id);
+  }
+
   // --- Autorizador (publico, sin autenticacion) ---
 
   @Get('solicitudes')
-  @ApiOperation({ summary: 'Listar todas las solicitudes. Filtrar por estado y/o campo_id' })
+  @ApiOperation({
+    summary: 'Listar todas las solicitudes. Filtrar por estado y/o campo_id',
+  })
   getAllSolicitudes(
-    @Query('estado')   estado?: EstadoSolicitudDotacion,
+    @Query('estado') estado?: EstadoSolicitudDotacion,
     @Query('campo_id') campoId?: string,
   ) {
     return this.service.getAllSolicitudes(estado, campoId);
@@ -54,7 +93,10 @@ export class DotacionesController {
   @Patch('solicitudes/:id/estado')
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
-  @ApiOperation({ summary: 'Cambiar estado de una solicitud (emitida -> autorizada -> generada -> entregada)' })
+  @ApiOperation({
+    summary:
+      'Cambiar estado de una solicitud (emitida -> autorizada -> generada -> entregada)',
+  })
   updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDotacionDto) {
     return this.service.updateEstado(id, dto);
   }
@@ -63,7 +105,8 @@ export class DotacionesController {
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({
-    summary: 'Generar RQ desde una solicitud autorizada. La solicitud pasa a estado "generada".',
+    summary:
+      'Generar RQ desde una solicitud autorizada. La solicitud pasa a estado "generada".',
   })
   generarRq(@Param('id') id: string, @Body() dto: CreateRqDesdeDotacionDto) {
     return this.service.generarRq(id, dto);
@@ -73,7 +116,8 @@ export class DotacionesController {
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({
-    summary: 'Guardar firma del HSE. Multipart con campo "firma" (imagen). Nombre y cargo se toman de la solicitud.',
+    summary:
+      'Guardar firma del HSE. Multipart con campo "firma" (imagen). Nombre y cargo se toman de la solicitud.',
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('firma'))
@@ -81,7 +125,8 @@ export class DotacionesController {
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    if (!file) throw new BadRequestException('Se requiere la imagen de la firma');
+    if (!file)
+      throw new BadRequestException('Se requiere la imagen de la firma');
     return this.service.firmarHse(id, file);
   }
 
@@ -89,7 +134,8 @@ export class DotacionesController {
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiOperation({
-    summary: 'Guardar firma del autorizador. Multipart con campo "firma" (imagen) + nombre_autorizador + cargo_autorizador.',
+    summary:
+      'Guardar firma del autorizador. Multipart con campo "firma" (imagen) + nombre_autorizador + cargo_autorizador.',
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('firma'))
@@ -98,7 +144,8 @@ export class DotacionesController {
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: FirmaAutorizadorDto,
   ) {
-    if (!file) throw new BadRequestException('Se requiere la imagen de la firma');
+    if (!file)
+      throw new BadRequestException('Se requiere la imagen de la firma');
     return this.service.firmarAutorizador(id, file, dto);
   }
 
@@ -111,7 +158,10 @@ export class DotacionesController {
   }
 
   @Get('spaces/:token/empleados')
-  @ApiOperation({ summary: 'Listar empleados activos del campo asociado al token (sin autenticacion)' })
+  @ApiOperation({
+    summary:
+      'Listar empleados activos del campo asociado al token (sin autenticacion)',
+  })
   getEmpleados(@Param('token') token: string) {
     return this.service.getEmpleadosByToken(token);
   }
@@ -124,7 +174,8 @@ export class DotacionesController {
 
   @Post('spaces/:token/solicitudes')
   @ApiOperation({
-    summary: 'Crear solicitud con reposiciones y evidencias fotograficas en un solo envio',
+    summary:
+      'Crear solicitud con reposiciones y evidencias fotograficas en un solo envio',
     description: `
 Multipart/form-data. Campos de texto mas "reposiciones" como JSON string
 y archivos nombrados imagenes_0, imagenes_1... segun el indice de cada reposicion.
@@ -150,7 +201,9 @@ las del indice 1 en "imagenes_1", etc.
     try {
       reposicionesData = JSON.parse(body.reposiciones);
     } catch {
-      throw new BadRequestException('El campo reposiciones debe ser un JSON valido');
+      throw new BadRequestException(
+        'El campo reposiciones debe ser un JSON valido',
+      );
     }
 
     if (!Array.isArray(reposicionesData) || reposicionesData.length === 0) {
@@ -159,7 +212,7 @@ las del indice 1 en "imagenes_1", etc.
 
     // Agrupar archivos por indice de reposicion: imagenes_0, imagenes_1, ...
     const filesByIndex: Record<number, Express.Multer.File[]> = {};
-    for (const file of (files ?? [])) {
+    for (const file of files ?? []) {
       const match = file.fieldname.match(/^imagenes_(\d+)$/);
       if (match) {
         const idx = parseInt(match[1], 10);
@@ -179,11 +232,11 @@ las del indice 1 en "imagenes_1", etc.
     return this.service.createSolicitud(
       token,
       {
-        contrato:                body.contrato,
-        fecha:                   body.fecha,
+        contrato: body.contrato,
+        fecha: body.fecha,
         inspeccion_realizada_por: body.inspeccion_realizada_por,
-        cargo_inspector:         body.cargo_inspector,
-        reposiciones:            reposicionesData,
+        cargo_inspector: body.cargo_inspector,
+        reposiciones: reposicionesData,
       },
       filesByIndex,
     );

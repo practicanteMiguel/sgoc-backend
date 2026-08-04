@@ -1,17 +1,21 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, OneToMany,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { CategoriaInsumo } from './insumo.entity';
 import { RequisicionItem } from './requisicion-item.entity';
 
 export enum EstadoRequisicion {
-  ABIERTA          = 'ABIERTA',
-  APROBADA         = 'APROBADA',
+  ABIERTA = 'ABIERTA',
+  APROBADA = 'APROBADA',
   PEDIDO_REALIZADO = 'PEDIDO_REALIZADO',
-  EN_BODEGA        = 'EN_BODEGA',
-  ENTREGADO        = 'ENTREGADO',
-  COMPLETADA       = 'COMPLETADA',
+  EN_BODEGA = 'EN_BODEGA',
+  ENTREGADO = 'ENTREGADO',
+  COMPLETADA = 'COMPLETADA',
 }
 
 @Entity('requisiciones')
@@ -40,7 +44,11 @@ export class Requisicion {
   @Column({ type: 'varchar', nullable: true })
   numero_contrato!: string | null;
 
-  @Column({ type: 'enum', enum: EstadoRequisicion, default: EstadoRequisicion.ABIERTA })
+  @Column({
+    type: 'enum',
+    enum: EstadoRequisicion,
+    default: EstadoRequisicion.ABIERTA,
+  })
   estado!: EstadoRequisicion;
 
   @Column({ type: 'text', nullable: true })
@@ -70,10 +78,15 @@ export class Requisicion {
   @Column({ type: 'uuid', nullable: true })
   solicitud_id!: string | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  creado_por_id!: string | null;
+
   @Column({ type: 'text', nullable: true })
   observaciones!: string | null;
 
-  @OneToMany(() => RequisicionItem, item => item.requisicion, { cascade: true })
+  @OneToMany(() => RequisicionItem, (item) => item.requisicion, {
+    cascade: true,
+  })
   items!: RequisicionItem[];
 
   @CreateDateColumn({ type: 'timestamptz' })

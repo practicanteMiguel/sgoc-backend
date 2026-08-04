@@ -1,4 +1,14 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsUUID, IsEnum, IsDateString, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  IsUUID,
+  IsEnum,
+  IsDateString,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { TipoEntrega } from '../entities/entrega-indumentaria.entity';
 
@@ -66,6 +76,12 @@ export class CreateEntregaDto {
   @IsOptional()
   @IsUUID()
   registrado_por_id?: string | null;
+}
+
+export class UpsertTallaDto {
+  @IsOptional()
+  @IsString()
+  talla?: string | null;
 }
 
 export class RegistrarEntregaBatchDto {
