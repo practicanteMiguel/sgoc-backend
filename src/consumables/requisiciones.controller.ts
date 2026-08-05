@@ -1,12 +1,30 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseIntPipe, UseGuards,
-  UseInterceptors, UploadedFile, BadRequestException,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  ParseIntPipe,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiQuery, ApiHeader, ApiConsumes } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+  ApiHeader,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity';
 import { RequisicionesService } from './requisiciones.service';
 import {
   CreateRequisicionDto,
@@ -17,6 +35,7 @@ import {
   UpdateFacturasDto,
   RecepcionDto,
   ConfirmarRecepcionDotacionDto,
+  CreateRqDirectaDto,
 } from './dto/create-requisicion.dto';
 
 @ApiTags('Requisiciones')
@@ -27,32 +46,54 @@ export class RequisicionesController {
   @Post()
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
-  @ApiOperation({ summary: 'Crear RQ individual. Genera automaticamente un item por cada insumo activo de la categoria' })
+  @ApiOperation({
+    summary:
+      'Crear RQ individual. Genera automaticamente un item por cada insumo activo de la categoria',
+  })
   create(@Body() dto: CreateRequisicionDto) {
     return this.service.create(dto);
+  }
+
+  @Post('rq-directa')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary:
+      'Crear una RQ directamente, sin una solicitud previa (el encargado elige insumos y cantidades)',
+  })
+  crearRqDirecta(@Body() dto: CreateRqDirectaDto, @CurrentUser() user: User) {
+    return this.service.crearRqDirecta(dto, user.id);
   }
 
   @Post('masivo')
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
-  @ApiOperation({ summary: 'Encargado genera RQs para todas las plantas con supervisor. Notifica a cada supervisor automaticamente' })
+  @ApiOperation({
+    summary:
+      'Encargado genera RQs para todas las plantas con supervisor. Notifica a cada supervisor automaticamente',
+  })
   crearMasivo(@Body() dto: CreateRequisicionMasivoDto) {
     return this.service.crearMasivo(dto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar requisiciones. Con mes+anio filtra por periodo de la solicitud vinculada (o created_at si es manual)' })
+  @ApiOperation({
+    summary:
+      'Listar requisiciones. Con mes+anio filtra por periodo de la solicitud vinculada (o created_at si es manual)',
+  })
   @ApiQuery({ name: 'mes', type: Number, required: false, example: 5 })
   @ApiQuery({ name: 'anio', type: Number, required: false, example: 2026 })
-  findAll(
-    @Query('mes') mes?: string,
-    @Query('anio') anio?: string,
-  ) {
-    return this.service.findAll(mes ? Number(mes) : undefined, anio ? Number(anio) : undefined);
+  findAll(@Query('mes') mes?: string, @Query('anio') anio?: string) {
+    return this.service.findAll(
+      mes ? Number(mes) : undefined,
+      anio ? Number(anio) : undefined,
+    );
   }
 
   @Get('informe')
-  @ApiOperation({ summary: 'Informe mensual: rows planos por item con estimado vs real, totales globales' })
+  @ApiOperation({
+    summary:
+      'Informe mensual: rows planos por item con estimado vs real, totales globales',
+  })
   @ApiQuery({ name: 'mes', type: Number, example: 5 })
   @ApiQuery({ name: 'anio', type: Number, example: 2026 })
   informe(
@@ -63,7 +104,9 @@ export class RequisicionesController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener RQ con items, valores unitarios y totales' })
+  @ApiOperation({
+    summary: 'Obtener RQ con items, valores unitarios y totales',
+  })
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
@@ -71,7 +114,9 @@ export class RequisicionesController {
   @Patch(':id')
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
-  @ApiOperation({ summary: 'Actualizar cabecera de la RQ (numero_rq, lote, lugar)' })
+  @ApiOperation({
+    summary: 'Actualizar cabecera de la RQ (numero_rq, lote, lugar)',
+  })
   update(@Param('id') id: string, @Body() dto: UpdateRequisicionDto) {
     return this.service.update(id, dto);
   }
@@ -79,15 +124,24 @@ export class RequisicionesController {
   @Patch(':id/llenado')
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
-  @ApiOperation({ summary: 'Supervisor llena fecha, nombre, contrato y cantidades solicitadas' })
-  llenadoSupervisor(@Param('id') id: string, @Body() dto: LlenadoSupervisorDto) {
+  @ApiOperation({
+    summary:
+      'Supervisor llena fecha, nombre, contrato y cantidades solicitadas',
+  })
+  llenadoSupervisor(
+    @Param('id') id: string,
+    @Body() dto: LlenadoSupervisorDto,
+  ) {
     return this.service.llenadoSupervisor(id, dto);
   }
 
   @Patch(':id/estado')
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
-  @ApiOperation({ summary: 'Compras avanza el estado de la RQ: PEDIDO_REALIZADO | EN_BODEGA | ENTREGADO' })
+  @ApiOperation({
+    summary:
+      'Compras avanza el estado de la RQ: PEDIDO_REALIZADO | EN_BODEGA | ENTREGADO',
+  })
   updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDto) {
     return this.service.updateEstado(id, dto);
   }
@@ -95,14 +149,19 @@ export class RequisicionesController {
   @Patch(':id/facturas')
   @UseGuards(ApiKeyGuard)
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
-  @ApiOperation({ summary: 'Encargado registra numero de factura y precio real por item' })
+  @ApiOperation({
+    summary: 'Encargado registra numero de factura y precio real por item',
+  })
   updateFacturas(@Param('id') id: string, @Body() dto: UpdateFacturasDto) {
     return this.service.updateFacturas(id, dto);
   }
 
   @Patch(':id/recepcion')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Supervisor confirma recepcion: registra cantidades recibidas por item, fecha de entrega y firma. Cambia estado a ENTREGADO.' })
+  @ApiOperation({
+    summary:
+      'Supervisor confirma recepcion: registra cantidades recibidas por item, fecha de entrega y firma. Cambia estado a ENTREGADO.',
+  })
   confirmarRecepcion(
     @Param('id') id: string,
     @Body() dto: RecepcionDto,
@@ -116,13 +175,17 @@ export class RequisicionesController {
   @ApiHeader({ name: 'X-Api-Key', description: 'API key de acceso público' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('firma'))
-  @ApiOperation({ summary: 'Compras confirma recepcion de una RQ de dotacion: cantidades por item y firma de quien recibe. Cambia estado a ENTREGADO.' })
+  @ApiOperation({
+    summary:
+      'Compras confirma recepcion de una RQ de dotacion: cantidades por item y firma de quien recibe. Cambia estado a ENTREGADO.',
+  })
   confirmarRecepcionDotacion(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: ConfirmarRecepcionDotacionDto,
   ) {
-    if (!file) throw new BadRequestException('Se requiere la imagen de la firma');
+    if (!file)
+      throw new BadRequestException('Se requiere la imagen de la firma');
     return this.service.confirmarRecepcionDotacion(id, file, dto);
   }
 

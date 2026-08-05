@@ -190,6 +190,24 @@ export class IndumentariaController {
     return this.service.getCensoResumen();
   }
 
+  @Get('censo-valores')
+  @ApiOperation({
+    summary:
+      'Censo en valores por empleado (historico). El valor de cada entrega queda congelado desde que se registra',
+  })
+  getCensoValores() {
+    return this.service.getCensoValores();
+  }
+
+  @Get('censo-valores/:empleadoId')
+  @ApiOperation({
+    summary:
+      'Detalle del censo en valores de un empleado: una fila por entrega con el valor congelado en ese momento',
+  })
+  getCensoValorEmpleadoDetalle(@Param('empleadoId') empleadoId: string) {
+    return this.service.getCensoValorEmpleadoDetalle(empleadoId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener item de indumentaria por id' })
   findOne(@Param('id') id: string) {

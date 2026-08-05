@@ -5,6 +5,8 @@ import { EntregaIndumentaria } from './entities/entrega-indumentaria.entity';
 import { EmpleadoTalla } from './entities/empleado-talla.entity';
 import { Employee } from '../employees/entities/employee.entity';
 import { User } from '../../users/entities/user.entity';
+import { Requisicion } from '../../consumables/entities/requisicion.entity';
+import { RequisicionItemAdicional } from '../../consumables/entities/requisicion-item-adicional.entity';
 import { CloudinaryService } from '../activities/cloudinary/cloudinary.service';
 import { IndumentariaService } from './indumentaria.service';
 import { IndumentariaController } from './indumentaria.controller';
@@ -17,6 +19,8 @@ import { IndumentariaController } from './indumentaria.controller';
       EmpleadoTalla,
       Employee,
       User,
+      Requisicion,
+      RequisicionItemAdicional,
     ]),
   ],
   controllers: [IndumentariaController],

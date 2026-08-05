@@ -44,6 +44,12 @@ export class EntregaIndumentaria {
   @Column({ type: 'int', default: 1 })
   cantidad!: number;
 
+  // Valor unitario congelado al momento de registrar la entrega (precio de la
+  // RQ mas cercana en el tiempo para este item). No se recalcula despues,
+  // aunque se creen nuevas RQs con otro precio para el mismo item.
+  @Column({ type: 'numeric', precision: 14, scale: 2, nullable: true })
+  valor_unitario!: number | null;
+
   @Column({ type: 'varchar', nullable: true })
   talla!: string | null;
 

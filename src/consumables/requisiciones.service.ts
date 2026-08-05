@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { Requisicion, EstadoRequisicion } from './entities/requisicion.entity';
 import { RequisicionItem } from './entities/requisicion-item.entity';
@@ -30,6 +30,7 @@ import {
   UpdateFacturasDto,
   RecepcionDto,
   ConfirmarRecepcionDotacionDto,
+  CreateRqDirectaDto,
 } from './dto/create-requisicion.dto';
 
 const MESES = [
@@ -101,6 +102,54 @@ export class RequisicionesService {
     await this.itemRepo.save(items);
 
     return this.findOne(saved.id);
+  }
+
+  // RQ creada directamente por el encargado, eligiendo insumos y cantidades a
+  // mano, sin que exista una solicitud previa de un campo.
+  async crearRqDirecta(dto: CreateRqDirectaDto, userId: string) {
+    await this.assertNumeroUnico(dto.numero_rq);
+
+    const insumoIds = dto.items.map((i) => i.insumo_id);
+    const insumos = await this.insumoRepo.find({
+      where: { id: In(insumoIds) },
+    });
+    if (insumos.length !== new Set(insumoIds).size) {
+      throw new NotFoundException('Uno o mas insumos no existen');
+    }
+    const fueraDeCategoria = insumos.find((i) => i.categoria !== dto.categoria);
+    if (fueraDeCategoria) {
+      throw new BadRequestException(
+        `El insumo ${fueraDeCategoria.codigo} no pertenece a la categoria ${dto.categoria}`,
+      );
+    }
+
+    const rq = await this.rqRepo.save(
+      this.rqRepo.create({
+        numero_rq: dto.numero_rq,
+        categoria: dto.categoria,
+        lugar: dto.lugar,
+        lote: dto.lote ?? 45,
+        field_id: null,
+        solicitud_id: null,
+        creado_por_id: userId,
+        observaciones: dto.observaciones ?? null,
+        fecha: dto.fecha ?? null,
+        nombre_solicitante: dto.nombre_solicitante ?? null,
+        numero_contrato: dto.numero_contrato ?? null,
+        estado: EstadoRequisicion.APROBADA,
+      }),
+    );
+
+    const items = dto.items.map((it) =>
+      this.itemRepo.create({
+        requisicion_id: rq.id,
+        insumo_id: it.insumo_id,
+        solicitado: it.solicitado,
+      }),
+    );
+    await this.itemRepo.save(items);
+
+    return this.findOne(rq.id);
   }
 
   async crearMasivo(dto: CreateRequisicionMasivoDto) {

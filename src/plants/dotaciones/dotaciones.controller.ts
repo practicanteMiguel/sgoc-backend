@@ -19,6 +19,7 @@ import {
   ApiOperation,
   ApiConsumes,
   ApiHeader,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -75,6 +76,26 @@ export class DotacionesController {
   })
   crearRqDirecta(@Body() dto: CreateRqDirectaDto, @CurrentUser() user: User) {
     return this.service.crearRqDirecta(dto, user.id);
+  }
+
+  @Get('informe')
+  @ApiOperation({
+    summary:
+      'Informe mensual de valor de RQs de dotacion (por origen, por dia, por item). Usa el valor_unitario congelado en cada RQ',
+  })
+  @ApiQuery({ name: 'mes', required: true })
+  @ApiQuery({ name: 'anio', required: true })
+  getInforme(@Query('mes') mes: string, @Query('anio') anio: string) {
+    return this.service.getInformeValores(+mes, +anio);
+  }
+
+  @Get('informe/total-historico')
+  @ApiOperation({
+    summary:
+      'Total invertido en RQs de dotacion de todos los tiempos (por origen), usando el valor_unitario congelado en cada RQ',
+  })
+  getInformeTotalHistorico() {
+    return this.service.getInformeTotalHistorico();
   }
 
   // --- Autorizador (publico, sin autenticacion) ---

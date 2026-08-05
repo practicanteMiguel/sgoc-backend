@@ -1,6 +1,15 @@
 import {
-  IsString, IsNotEmpty, IsEnum, IsOptional,
-  IsNumber, IsInt, IsArray, ValidateNested, IsUUID, IsBoolean,
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsNumber,
+  IsInt,
+  IsArray,
+  ArrayMinSize,
+  ValidateNested,
+  IsUUID,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -13,7 +22,8 @@ export class CreateRequisicionDto {
   numero_rq!: number;
 
   @ApiPropertyOptional({ default: 45 })
-  @IsOptional() @IsInt()
+  @IsOptional()
+  @IsInt()
   lote?: number;
 
   @ApiProperty({ enum: CategoriaInsumo })
@@ -21,21 +31,82 @@ export class CreateRequisicionDto {
   categoria!: CategoriaInsumo;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   lugar?: string;
+}
+
+export class RqDirectaItemDto {
+  @ApiProperty()
+  @IsUUID()
+  insumo_id!: string;
+
+  @ApiProperty()
+  @IsNumber()
+  solicitado!: number;
+}
+
+export class CreateRqDirectaDto {
+  @ApiProperty()
+  @IsInt()
+  numero_rq!: number;
+
+  @ApiProperty({ enum: CategoriaInsumo })
+  @IsEnum(CategoriaInsumo)
+  categoria!: CategoriaInsumo;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  lugar!: string;
+
+  @ApiPropertyOptional({ default: 45 })
+  @IsOptional()
+  @IsInt()
+  lote?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
+
+  @ApiPropertyOptional({ example: '2026-05-26' })
+  @IsOptional()
+  @IsString()
+  fecha?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nombre_solicitante?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  numero_contrato?: string;
+
+  @ApiProperty({ type: [RqDirectaItemDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => RqDirectaItemDto)
+  items!: RqDirectaItemDto[];
 }
 
 export class UpdateRequisicionDto {
   @ApiPropertyOptional()
-  @IsOptional() @IsInt()
+  @IsOptional()
+  @IsInt()
   numero_rq?: number;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsInt()
+  @IsOptional()
+  @IsInt()
   lote?: number;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   lugar?: string;
 }
 
@@ -55,7 +126,8 @@ export class CreateRequisicionMasivoDto {
   numero_rq!: number;
 
   @ApiPropertyOptional({ default: 45 })
-  @IsOptional() @IsInt()
+  @IsOptional()
+  @IsInt()
   lote?: number;
 
   @ApiProperty({ enum: CategoriaInsumo })
@@ -64,7 +136,13 @@ export class CreateRequisicionMasivoDto {
 }
 
 export class UpdateEstadoDto {
-  @ApiProperty({ enum: [EstadoRequisicion.PEDIDO_REALIZADO, EstadoRequisicion.EN_BODEGA, EstadoRequisicion.ENTREGADO] })
+  @ApiProperty({
+    enum: [
+      EstadoRequisicion.PEDIDO_REALIZADO,
+      EstadoRequisicion.EN_BODEGA,
+      EstadoRequisicion.ENTREGADO,
+    ],
+  })
   @IsEnum(EstadoRequisicion)
   estado!: EstadoRequisicion;
 }
@@ -75,19 +153,23 @@ export class ItemFacturaDto {
   id!: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   numero_factura?: string;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   precio_real?: number;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   proveedor_factura?: string | null;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   es_adicional?: boolean;
 }
 
@@ -109,13 +191,15 @@ export class ItemRecepcionDto {
   recibido!: number;
 
   @ApiPropertyOptional()
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   es_adicional?: boolean;
 }
 
 export class RecepcionDto {
   @ApiProperty({ example: '2026-05-26' })
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   fecha_entrega!: string;
 
   @ApiProperty({ type: [ItemRecepcionDto] })
@@ -127,33 +211,40 @@ export class RecepcionDto {
 
 export class ConfirmarRecepcionDotacionDto {
   @ApiProperty({ example: '2026-05-26' })
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   fecha_entrega!: string;
 
   @ApiProperty({ description: 'Nombre de quien recibe la dotacion' })
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   nombre_receptor!: string;
 
   @ApiProperty({ description: 'Cargo de quien recibe la dotacion' })
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   cargo_receptor!: string;
 
   @ApiProperty({ description: 'JSON stringificado de [{ id, recibido }]' })
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   items!: string;
 }
 
 export class LlenadoSupervisorDto {
   @ApiProperty()
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   fecha!: string;
 
   @ApiProperty()
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   nombre_solicitante!: string;
 
   @ApiProperty()
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   numero_contrato!: string;
 
   @ApiProperty({ type: [ItemSolicitadoDto] })

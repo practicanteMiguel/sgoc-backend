@@ -381,6 +381,107 @@ export class DotacionesService {
     return { ...rq, items };
   }
 
+  // Informe de valores: se basa en el valor_unitario de cada item de RQ, que
+  // queda congelado al momento de generar la RQ y no cambia aunque despues se
+  // actualice el precio del catalogo de indumentaria. "origen" distingue si la
+  // RQ vino de una reposicion (tiene solicitud_id) o fue creada directamente
+  // por el encargado (dotacion inicial/periodica).
+  async getInformeValores(mes: number, anio: number) {
+    const rows = await this.rqItemRepo
+      .createQueryBuilder('a')
+      .innerJoin('a.requisicion', 'r')
+      .select('a.id', 'id')
+      .addSelect('a.indumentaria_id', 'indumentaria_id')
+      .addSelect('a.codigo', 'codigo')
+      .addSelect('a.descripcion', 'descripcion')
+      .addSelect('a.solicitado', 'solicitado')
+      .addSelect('a.valor_unitario', 'valor_unitario')
+      .addSelect('r.numero_rq', 'numero_rq')
+      .addSelect('r.lugar', 'lugar')
+      .addSelect('COALESCE(r.fecha, r.created_at::date)', 'fecha')
+      .addSelect('r.solicitud_id', 'solicitud_id')
+      .where('r.categoria = :cat', { cat: CategoriaInsumo.DOTACION })
+      .andWhere(
+        'EXTRACT(MONTH FROM COALESCE(r.fecha, r.created_at::date)) = :mes',
+        { mes },
+      )
+      .andWhere(
+        'EXTRACT(YEAR FROM COALESCE(r.fecha, r.created_at::date)) = :anio',
+        { anio },
+      )
+      .orderBy('COALESCE(r.fecha, r.created_at::date)', 'ASC')
+      .getRawMany<{
+        id: string;
+        indumentaria_id: string | null;
+        codigo: string | null;
+        descripcion: string;
+        solicitado: string | null;
+        valor_unitario: string | null;
+        numero_rq: number;
+        lugar: string | null;
+        fecha: Date;
+        solicitud_id: string | null;
+      }>();
+
+    let total_valor = 0;
+    const por_origen = { REPOSICION: 0, DIRECTA: 0 };
+
+    const out = rows.map((r) => {
+      const solicitado = Number(r.solicitado ?? 0);
+      const valor_unitario =
+        r.valor_unitario !== null ? Number(r.valor_unitario) : null;
+      const valor_total = solicitado * (valor_unitario ?? 0);
+      const origen: 'REPOSICION' | 'DIRECTA' = r.solicitud_id
+        ? 'REPOSICION'
+        : 'DIRECTA';
+      total_valor += valor_total;
+      por_origen[origen] += valor_total;
+      return {
+        id: r.id,
+        fecha: r.fecha,
+        numero_rq: r.numero_rq,
+        lugar: r.lugar,
+        indumentaria_id: r.indumentaria_id,
+        codigo: r.codigo,
+        descripcion: r.descripcion,
+        solicitado,
+        valor_unitario,
+        valor_total,
+        origen,
+      };
+    });
+
+    return { mes, anio, total_valor, por_origen, rows: out };
+  }
+
+  async getInformeTotalHistorico() {
+    const rows = await this.rqItemRepo
+      .createQueryBuilder('a')
+      .innerJoin('a.requisicion', 'r')
+      .select('a.solicitado', 'solicitado')
+      .addSelect('a.valor_unitario', 'valor_unitario')
+      .addSelect('r.solicitud_id', 'solicitud_id')
+      .where('r.categoria = :cat', { cat: CategoriaInsumo.DOTACION })
+      .getRawMany<{
+        solicitado: string | null;
+        valor_unitario: string | null;
+        solicitud_id: string | null;
+      }>();
+
+    let total_valor = 0;
+    const por_origen = { REPOSICION: 0, DIRECTA: 0 };
+    for (const r of rows) {
+      const valor = Number(r.solicitado ?? 0) * Number(r.valor_unitario ?? 0);
+      const origen: 'REPOSICION' | 'DIRECTA' = r.solicitud_id
+        ? 'REPOSICION'
+        : 'DIRECTA';
+      total_valor += valor;
+      por_origen[origen] += valor;
+    }
+
+    return { total_valor, por_origen };
+  }
+
   async firmarHse(id: string, file: Express.Multer.File) {
     const solicitud = await this.solicitudRepo.findOne({
       where: { id },
